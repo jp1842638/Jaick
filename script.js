@@ -513,6 +513,13 @@
         || /\bhooray\b/i.test(t)
         || /\bhurrah\b/i.test(t);
   }
+  function isConfused(t) {
+    return /\bhu+h+\b/i.test(t);  // huh, huuh, huhhh, huuuhhh
+  }
+  function isHmm(t) {
+    return /\bhm+\b/i.test(t)        // hm, hmm, hmmmm
+        || /\bhmm+m*\b/i.test(t);    // (redundant safety)
+  }
 
   // ============================================================
   // Story Generation
@@ -716,6 +723,13 @@
     "Yay, thank you! 🎉 It really is my birthday!",
     "Thanks! 🥳 You remembered! That means a lot.",
     "Thank you! 🎈 Best birthday ever — chatting with you! 💝",
+  ];
+
+  const confusedReplies = [
+    "Did I say something weird? 🤔",
+    "What's confusing? I can explain!",
+    "Hmm, did I make a typo?",
+    "Sorry, am I being unclear? 😅",
   ];
 
   // ============================================================
@@ -1074,6 +1088,16 @@
     // 13e. Cheering reaction
     if (isCheering(text)) {
       return { text: 'Hooray!', type: 'bot' };
+    }
+
+    // 13f. Confused reaction (Huh / Huh??? / Huuuh??)
+    if (isConfused(text)) {
+      return { text: pickRandom(confusedReplies), type: 'bot' };
+    }
+
+    // 13g. Hmm reaction (curious thinking sound)
+    if (isHmm(text)) {
+      return { text: 'What are you so curious about?', type: 'bot' };
     }
 
     // 14. Mood
