@@ -497,6 +497,23 @@
         || /\bhow\s+to\s+speak\s+korean\b/.test(t);
   }
 
+  // --- Laughing / Cheering ---
+  function isLaughing(t) {
+    return /\b(?:ha){2,}h?\b/i.test(t)        // haha, hahaha, hahahah
+        || /\b(?:he){2,}h?\b/i.test(t)        // hehe, hehehe
+        || /\blo+l\b/i.test(t)                 // lol, looool
+        || /\b(?:lol){2,}\b/i.test(t)          // lolol, lololol
+        || /\blmf?ao\b/i.test(t)               // lmao, lmfao
+        || /\brofl\b/i.test(t);
+  }
+  function isCheering(t) {
+    return /\bya+y+\b/i.test(t)                // yay, yaay, yayyy
+        || /\bwoo+\s*ho+o*\b/i.test(t)         // woohoo, woo hoo, wooohoo
+        || /\byippee\b/i.test(t)
+        || /\bhooray\b/i.test(t)
+        || /\bhurrah\b/i.test(t);
+  }
+
   // ============================================================
   // Story Generation
   // ============================================================
@@ -1047,6 +1064,16 @@
     }
     if (isAskingKorean(text)) {
       return { text: 'I cannot speak Korean, but you can learn it in https://jp1842638.github.io/korean-learning/', type: 'bot' };
+    }
+
+    // 13d. Laughing reaction
+    if (isLaughing(text)) {
+      return { text: "What's so funny?", type: 'bot' };
+    }
+
+    // 13e. Cheering reaction
+    if (isCheering(text)) {
+      return { text: 'Hooray!', type: 'bot' };
     }
 
     // 14. Mood
