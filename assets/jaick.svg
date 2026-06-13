@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <!-- Background gradient (matches app theme) -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#ffb3d9"/>
+      <stop offset="50%" stop-color="#a8c8ff"/>
+      <stop offset="100%" stop-color="#b3f0ff"/>
+    </linearGradient>
+
+    <!-- Hair gradient: deep navy with subtle highlight -->
+    <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#2a3f7a"/>
+      <stop offset="100%" stop-color="#1a2750"/>
+    </linearGradient>
+
+    <!-- Skin gradient: light, soft -->
+    <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#fce8d6"/>
+      <stop offset="100%" stop-color="#f6d4ba"/>
+    </linearGradient>
+
+    <!-- Shirt gradient: warm orange -->
+    <linearGradient id="shirtGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#ff9a3c"/>
+      <stop offset="100%" stop-color="#e8650f"/>
+    </linearGradient>
+
+    <!-- Eye sparkle highlight -->
+    <radialGradient id="eyeGrad" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#5a78c8"/>
+      <stop offset="100%" stop-color="#1a2750"/>
+    </radialGradient>
+
+    <clipPath id="square">
+      <rect x="0" y="0" width="300" height="300" rx="20" ry="20"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#square)">
+
+    <!-- Background -->
+    <rect width="300" height="300" fill="url(#bg)"/>
+
+    <!-- Soft glow behind character -->
+    <ellipse cx="150" cy="170" rx="120" ry="100" fill="#ffffff" opacity="0.25"/>
+
+    <!-- ===== Shirt (orange, lower portion) ===== -->
+    <!-- Body/shirt as a wide rounded rectangle peeking from the bottom -->
+    <path d="
+      M 30 300
+      L 30 240
+      Q 60 200 110 195
+      L 190 195
+      Q 240 200 270 240
+      L 270 300
+      Z
+    " fill="url(#shirtGrad)"/>
+
+    <!-- Shirt collar V detail -->
+    <path d="M 130 195 L 150 215 L 170 195 Z" fill="#c54a08" opacity="0.6"/>
+
+    <!-- Shirt highlight (subtle) -->
+    <path d="
+      M 60 300
+      L 60 250
+      Q 80 220 110 215
+      L 140 215
+      L 140 300 Z
+    " fill="#ffffff" opacity="0.08"/>
+
+    <!-- ===== Neck ===== -->
+    <rect x="135" y="170" width="30" height="35" rx="6" fill="url(#skinGrad)"/>
+    <!-- Neck shadow -->
+    <ellipse cx="150" cy="200" rx="22" ry="6" fill="#d8a98a" opacity="0.5"/>
+
+    <!-- ===== Hair back (behind face) ===== -->
+    <path d="
+      M 60 130
+      Q 50 80 95 55
+      Q 130 35 150 35
+      Q 170 35 205 55
+      Q 250 80 240 130
+      Q 245 165 230 195
+      L 230 220
+      Q 200 230 180 220
+      L 180 175
+      Q 150 175 120 175
+      L 120 220
+      Q 100 230 70 220
+      L 70 195
+      Q 55 165 60 130 Z
+    " fill="url(#hairGrad)"/>
+
+    <!-- ===== Face ===== -->
+    <ellipse cx="150" cy="135" rx="58" ry="68" fill="url(#skinGrad)"/>
+
+    <!-- Face shadow on right side (subtle) -->
+    <path d="
+      M 195 135
+      Q 200 175 175 195
+      Q 165 200 155 198
+      L 155 100
+      Q 175 100 195 135 Z
+    " fill="#e9c2a3" opacity="0.35"/>
+
+    <!-- ===== Hair (front bangs - perm/curly style) ===== -->
+    <!-- Curly puffs across the forehead -->
+    <path d="
+      M 92 100
+      Q 80 80 95 65
+      Q 110 55 120 70
+      Q 130 60 145 70
+      Q 158 55 175 65
+      Q 195 60 205 80
+      Q 220 90 215 110
+      Q 200 105 185 110
+      Q 170 95 155 105
+      Q 140 95 125 105
+      Q 110 100 95 110
+      Q 88 110 92 100 Z
+    " fill="url(#hairGrad)"/>
+
+    <!-- Side hair curls (left) -->
+    <circle cx="78" cy="120" r="18" fill="url(#hairGrad)"/>
+    <circle cx="68" cy="145" r="16" fill="url(#hairGrad)"/>
+    <circle cx="72" cy="170" r="14" fill="url(#hairGrad)"/>
+
+    <!-- Side hair curls (right) -->
+    <circle cx="222" cy="120" r="18" fill="url(#hairGrad)"/>
+    <circle cx="232" cy="145" r="16" fill="url(#hairGrad)"/>
+    <circle cx="228" cy="170" r="14" fill="url(#hairGrad)"/>
+
+    <!-- Top puff curls (extra perm volume) -->
+    <circle cx="115" cy="55" r="14" fill="url(#hairGrad)"/>
+    <circle cx="135" cy="42" r="13" fill="url(#hairGrad)"/>
+    <circle cx="160" cy="40" r="14" fill="url(#hairGrad)"/>
+    <circle cx="185" cy="50" r="13" fill="url(#hairGrad)"/>
+
+    <!-- Hair highlight strands -->
+    <path d="M 110 75 Q 130 65 150 70" stroke="#4a5fa8" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <path d="M 165 70 Q 185 65 200 78" stroke="#4a5fa8" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+
+    <!-- ===== Eyebrows ===== -->
+    <path d="M 110 118 Q 125 112 140 118" stroke="#1a2750" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 160 118 Q 175 112 190 118" stroke="#1a2750" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+    <!-- ===== Eyes (anime style: large, sparkly) ===== -->
+    <!-- Left eye -->
+    <ellipse cx="125" cy="142" rx="13" ry="17" fill="#fff"/>
+    <ellipse cx="125" cy="143" rx="11" ry="15" fill="url(#eyeGrad)"/>
+    <ellipse cx="125" cy="143" rx="6" ry="9" fill="#1a2750"/>
+    <!-- Eye highlights -->
+    <ellipse cx="121" cy="138" rx="3.5" ry="4.5" fill="#fff"/>
+    <circle cx="129" cy="148" r="1.8" fill="#fff" opacity="0.9"/>
+
+    <!-- Right eye -->
+    <ellipse cx="175" cy="142" rx="13" ry="17" fill="#fff"/>
+    <ellipse cx="175" cy="143" rx="11" ry="15" fill="url(#eyeGrad)"/>
+    <ellipse cx="175" cy="143" rx="6" ry="9" fill="#1a2750"/>
+    <!-- Eye highlights -->
+    <ellipse cx="171" cy="138" rx="3.5" ry="4.5" fill="#fff"/>
+    <circle cx="179" cy="148" r="1.8" fill="#fff" opacity="0.9"/>
+
+    <!-- ===== Nose ===== -->
+    <path d="M 150 155 Q 152 165 148 168" stroke="#d8a98a" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- ===== Cheeks (light blush) ===== -->
+    <ellipse cx="115" cy="170" rx="10" ry="6" fill="#ffb6c1" opacity="0.45"/>
+    <ellipse cx="185" cy="170" rx="10" ry="6" fill="#ffb6c1" opacity="0.45"/>
+
+    <!-- ===== Mouth (gentle smile) ===== -->
+    <path d="M 138 180 Q 150 188 162 180" stroke="#b8634c" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Mouth shadow (subtle smile shadow) -->
+    <path d="M 142 184 Q 150 188 158 184" stroke="#a04535" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  </g>
+
+  <!-- Subtle border -->
+  <rect x="0.5" y="0.5" width="299" height="299" rx="20" ry="20" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
+</svg>

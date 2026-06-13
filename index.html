@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jaick - Rule-based chatbot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">✨</span>
+        <h1>Jaick</h1>
+      </div>
+      <p class="subtitle">Rule-based chatbot</p>
+      <button id="aboutBtn" class="about-btn" aria-label="About Jaick">About</button>
+    </header>
+
+    <main class="chat-container">
+      <div id="chatBox" class="chat-box" aria-live="polite"></div>
+
+      <form id="chatForm" class="chat-form" autocomplete="off">
+        <input
+          id="userInput"
+          type="text"
+          placeholder="Type your message in English..."
+          aria-label="Message input"
+          required
+        />
+        <button type="submit" class="send-btn" aria-label="Send message">
+          <span>Send</span>
+        </button>
+      </form>
+    </main>
+
+    <footer class="footer">
+      <p>Jaick supports English only.</p>
+    </footer>
+  </div>
+
+  <!-- About Modal -->
+  <div id="aboutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="modal-content">
+      <button id="closeModal" class="close-btn" aria-label="Close">×</button>
+      <h2 id="aboutTitle">About Jaick</h2>
+      <p>Jaick is a rule-based chatbot that can do many things. Start a conversation with a hi.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
