@@ -926,7 +926,7 @@
     // 3. Name meaning
     if (isAskingNameMeaning(text)) {
       return {
-        text: "J is my developer's first letter, ai is AI, c is my developer's friend's first letter, k is my developer's other friend's first letter.",
+        text: "J is a first letter of my developer's name, ai is AI, c is the first letter of my developer's friend's name, k is the first letter of my developer's other friend's name.",
         type: 'bot',
       };
     }
