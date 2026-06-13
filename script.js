@@ -805,7 +805,7 @@
       const choice = parseFriendChoice(text);
       if (choice === 'C') {
         state.awaitingFriendChoice = false;
-        return { text: "Oh, her?She's a silly girl.", type: 'bot' };
+        return { text: "Oh, her? She's a silly girl.", type: 'bot' };
       }
       if (choice === 'K') {
         state.awaitingFriendChoice = false;
