@@ -216,6 +216,22 @@ body {
   border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
+/* ========== Chat Links ========== */
+.chat-link {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.6);
+  text-underline-offset: 2px;
+  font-weight: 600;
+  word-break: break-all;
+  transition: all 0.2s ease;
+}
+
+.chat-link:hover {
+  text-decoration-color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
 /* ========== Typing Indicator ========== */
 .typing {
   align-self: flex-start;

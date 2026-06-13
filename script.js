@@ -21,6 +21,7 @@
     rpsActive: false,
     justRevealedCreator: false,
     justAnsweredGender: false,
+    tdMode: null, // 'truth' | 'dare' | null
   };
 
   // ---------- Jaick's Profile ----------
@@ -65,6 +66,29 @@
   // ============================================================
   // Chat UI Helpers
   // ============================================================
+  // Linkify: turn URLs in plain text into clickable <a> elements
+  function appendTextWithLinks(parent, text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      const a = document.createElement('a');
+      a.href = match[0];
+      a.textContent = match[0];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.classList.add('chat-link');
+      parent.appendChild(a);
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+  }
+
   function addMessage(text, sender = 'bot') {
     const msg = document.createElement('div');
     msg.classList.add('message', sender);
@@ -74,7 +98,7 @@
     senderLabel.textContent = sender === 'user' ? 'You' : 'Jaick';
 
     const body = document.createElement('span');
-    body.textContent = text;
+    appendTextWithLinks(body, text);
 
     msg.appendChild(senderLabel);
     msg.appendChild(body);
@@ -416,6 +440,63 @@
         || /\bhair\s+long\b/.test(t);
   }
 
+  // --- Truth or Dare ---
+  function isStartingTruthOrDare(t) {
+    return /\btruth\s+or\s+dare\b/.test(t)
+        || /\bplay\s+(truth\s+or\s+dare|tod)\b/.test(t)
+        || /^tod\b/.test(t.trim());
+  }
+  // Extract content between quotes — match double-quotes to double-quotes,
+  // and single-quotes to single-quotes (so apostrophes inside double-quoted
+  // strings like "What's up?" don't break extraction).
+  function extractQuoted(raw) {
+    // Double quotes (straight " and smart “ ”) — preferred
+    let m = raw.match(/["\u201C]([^"\u201D]+)["\u201D]/);
+    if (m) return m[1];
+    // Single quotes (straight ' and smart ‘ ’)
+    m = raw.match(/['\u2018]([^'\u2019]+)['\u2019]/);
+    if (m) return m[1];
+    return null;
+  }
+
+  // --- Developer site links ---
+  // Returns 'self' (jaick page) | 'other' (any other dev page) | null
+  function detectDevSiteLink(t) {
+    if (/https?:\/\/jp1842638\.github\.io\/jaick\b/i.test(t)) return 'self';
+    if (/https?:\/\/jp1842638\.github\.io\//i.test(t))         return 'other';
+    return null;
+  }
+
+  // --- External site redirects ---
+  function isAskingMusic(t) {
+    return /\b(play\s+(a\s+|some\s+)?(music|song|songs))\b/.test(t)
+        || /\b(make\s+(a\s+|some\s+)?(music|song))\b/.test(t)
+        || /\b(play\s+me\s+a\s+song)\b/.test(t);
+  }
+  function isAskingImage(t) {
+    return /\b(make|generate|create|draw)\s+(an?\s+)?(image|picture|drawing|art)\b/.test(t)
+        || /\b(image|picture)\s+generation\b/.test(t);
+  }
+  function isAskingWordMeaning(t) {
+    return /\bwhat\s+does\s+the\s+word\s+["'\u201C\u2018]/i.test(t)
+        || /\bwhat\s+does\s+["'\u201C\u2018][^"'\u201D\u2019]+["'\u201D\u2019]\s+mean\b/i.test(t)
+        || /\b(meaning|definition)\s+of\s+(the\s+word\s+)?["'\u201C\u2018]/i.test(t)
+        || /\bdefine\s+["'\u201C\u2018]/i.test(t);
+  }
+  function isAskingTimer(t) {
+    return /\b(set|start)\s+(a\s+|an\s+)?(timer|alarm|countdown)\b/.test(t)
+        || /\b(timer|alarm)\s+for\b/.test(t);
+  }
+  function isAskingNote(t) {
+    return /\b(write|take|make|save|leave)\s+(a\s+|some\s+)?(random\s+)?note(s)?\b/.test(t)
+        || /\bnote\s+(this|down|it)\b/.test(t);
+  }
+  function isAskingKorean(t) {
+    return /\b(teach|learn|study)\s+(me\s+)?korean\b/.test(t)
+        || /\bkorean\s+lesson\b/.test(t)
+        || /\bhow\s+to\s+speak\s+korean\b/.test(t);
+  }
+
   // ============================================================
   // Story Generation
   // ============================================================
@@ -724,11 +805,11 @@
       const choice = parseFriendChoice(text);
       if (choice === 'C') {
         state.awaitingFriendChoice = false;
-        return { text: "She's a silly girl. She is born in 2016, May 2nd.", type: 'bot' };
+        return { text: "Oh, her?She's a silly girl.", type: 'bot' };
       }
       if (choice === 'K') {
         state.awaitingFriendChoice = false;
-        return { text: "She's a bit silly, and she's a girl. She's born in 2016, April 13th.", type: 'bot' };
+        return { text: "She's a bit silly, and she's a girl.", type: 'bot' };
       }
       return { text: 'Please choose: C or K?', type: 'bot' };
     }
@@ -765,7 +846,7 @@
     if (state.justRevealedCreator) {
       state.justRevealedCreator = false; // consume regardless
       if (isClaimingDeveloper(text)) {
-        return { text: "Oh, hi developer! I didn't know it was you.", type: 'bot' };
+        return { text: "Oh, hi Lena! I didn't know it was you.", type: 'bot' };
       }
       // not claiming — fall through to normal handling
     }
@@ -777,6 +858,36 @@
         return { text: 'Sometimes boys have long hair.', type: 'bot' };
       }
       // not asking — fall through
+    }
+
+    // 2g. Developer site link reaction (handle before generic features)
+    {
+      const dev = detectDevSiteLink(rawInput);
+      if (dev === 'self')  return { text: "I'm inside that website!", type: 'bot' };
+      if (dev === 'other') return { text: 'Oh, my developer made that!', type: 'bot' };
+    }
+
+    // 2f. Truth or Dare in progress
+    if (state.tdMode) {
+      if (/\b(cancel|nevermind|never\s+mind|stop|forget\s+it|quit|exit)\b/.test(text)) {
+        state.tdMode = null;
+        return { text: 'Okay, no truth or dare this time. 🎲', type: 'bot' };
+      }
+      if (state.tdMode === 'dare') {
+        const quoted = extractQuoted(rawInput);
+        state.tdMode = null;
+        if (quoted) {
+          return { text: quoted, type: 'bot' };
+        }
+        return {
+          text: 'Please put what you want me to say in quotes! Like: I dare you to say "hello".',
+          type: 'bot',
+        };
+      }
+      if (state.tdMode === 'truth') {
+        state.tdMode = null;
+        return { text: Math.random() < 0.5 ? 'Yes!' : 'No!', type: 'bot' };
+      }
     }
 
     // ===== Special-priority specific phrases =====
@@ -814,8 +925,8 @@
 
     // 6. Friend direct / general
     const direct = detectDirectFriend(text);
-    if (direct === 'C') return { text: "She's a silly girl. She is born in 2016, May 2nd.", type: 'bot' };
-    if (direct === 'K') return { text: "She's a bit silly, and she's a girl. She's born in 2016, April 13th.", type: 'bot' };
+    if (direct === 'C') return { text: "Oh, her? She's a silly girl.", type: 'bot' };
+    if (direct === 'K') return { text: "She's a bit silly, and she's a girl.", type: 'bot' };
 
     if (isAskingFriend(text)) {
       state.awaitingFriendChoice = true;
@@ -905,6 +1016,37 @@
     if (isStartingRPS(text)) {
       state.rpsActive = true;
       return { text: 'Choose: rock, paper, or scissors! 🪨📄✂️', type: 'bot' };
+    }
+
+    // 13b. Truth or Dare start
+    if (isStartingTruthOrDare(text)) {
+      if (Math.random() < 0.5) {
+        state.tdMode = 'truth';
+        return { text: 'Truth! Ask me anything — start with "Is it true that..."', type: 'bot' };
+      } else {
+        state.tdMode = 'dare';
+        return { text: 'Dare! Tell me what to say in quotes — like: I dare you to say "hello".', type: 'bot' };
+      }
+    }
+
+    // 13c. External site redirects
+    if (isAskingMusic(text)) {
+      return { text: 'I cannot play a music, but you can make a music on https://jp1842638.github.io/xylophone/', type: 'bot' };
+    }
+    if (isAskingImage(text)) {
+      return { text: 'I cannot generate an image, but you can draw one in https://jp1842638.github.io/drawing/', type: 'bot' };
+    }
+    if (isAskingWordMeaning(text)) {
+      return { text: 'I cannot search up the meaning of that, but you can search it up on https://jp1842638.github.io/dictionary/', type: 'bot' };
+    }
+    if (isAskingTimer(text)) {
+      return { text: 'I cannot set timers or alarms, but you can do it yourself on https://jp1842638.github.io/simple-timer/', type: 'bot' };
+    }
+    if (isAskingNote(text)) {
+      return { text: "My developer didn't add that, but you can do it on https://jp1842638.github.io/temporary-note/", type: 'bot' };
+    }
+    if (isAskingKorean(text)) {
+      return { text: 'I cannot speak Korean, but you can learn it in https://jp1842638.github.io/korean-learning/', type: 'bot' };
     }
 
     // 14. Mood
