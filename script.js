@@ -308,6 +308,7 @@
     if (moodPattern('lonely|alone|isolated'))                   return 'lonely';
     if (moodPattern('stressed|overwhelmed'))                    return 'stressed';
     if (moodPattern('hungry|starving'))                         return 'hungry';
+    if (moodPattern('thirsty|parched|dehydrated'))              return 'thirsty';
     return null;
   }
 
@@ -520,6 +521,25 @@
     return /\bhm+\b/i.test(t)        // hm, hmm, hmmmm
         || /\bhmm+m*\b/i.test(t);    // (redundant safety)
   }
+  function isFrustrated(t) {
+    return /\bug+h+\b/i.test(t);  // ugh, uggh, ughh, ughhhh
+  }
+  function isCursing(t) {
+    return /\bf(?:u|\*|-)c?k(?:ing|ed|er|s)?\b/i.test(t)        // fuck, fucking, fck, f*ck, f-ck
+        || /\bsh(?:i|\*)t(?:ty|s)?\b/i.test(t)                   // shit, sh*t, shitty
+        || /\bass(?:hole|hat|holes)?\b/i.test(t)                 // ass, asshole, asshat
+        || /\ba\*\*hole\b/i.test(t)
+        || /\bb(?:i|\*)tch(?:es|y)?\b/i.test(t)                  // bitch, b*tch, bitches
+        || /\bdamn(?:it|ed)?\b/i.test(t)
+        || /\bgoddamn\b/i.test(t)
+        || /\bcrap(?:py)?\b/i.test(t)
+        || /\bdick\b/i.test(t)
+        || /\bcunt\b/i.test(t)
+        || /\bbastard\b/i.test(t)
+        || /\bwtf\b/i.test(t)
+        || /\bstfu\b/i.test(t)
+        || /\bfml\b/i.test(t);
+  }
 
   // ============================================================
   // Story Generation
@@ -716,6 +736,11 @@
       "Food fixes a lot of things. Treat yourself! 🍕",
       "Have you eaten today? Don't forget to. 🥪",
     ],
+    thirsty: [
+      "Drink some water! 💧 Stay hydrated.",
+      "Time for a glass of water! 🥤 Your body will thank you.",
+      "Have you had water today? Don't forget! 💦",
+    ],
   };
 
   const happyBirthdayReplies = [
@@ -730,6 +755,15 @@
     "What's confusing? I can explain!",
     "Hmm, did I make a typo?",
     "Sorry, am I being unclear? 😅",
+  ];
+
+  const shockedReplies = [
+    "😱 WHAT?! Did you just say that?!",
+    "OH MY GOSH! 😨 That's... that's a strong word!",
+    "😳 Whoa whoa whoa, language!",
+    "🚨 Watch your mouth! I'm just a baby chatbot!",
+    "😵 My circuits! That kind of language hurts! Please be nice!",
+    "H-h-hey! 😱 That's not a nice word!",
   ];
 
   // ============================================================
@@ -1098,6 +1132,16 @@
     // 13g. Hmm reaction (curious thinking sound)
     if (isHmm(text)) {
       return { text: 'What are you so curious about?', type: 'bot' };
+    }
+
+    // 13h. Cursing → shocked reaction (must come BEFORE mood detection)
+    if (isCursing(text)) {
+      return { text: pickRandom(shockedReplies), type: 'bot' };
+    }
+
+    // 13i. Frustrated (Ugh)
+    if (isFrustrated(text)) {
+      return { text: "What's wrong?", type: 'bot' };
     }
 
     // 14. Mood
