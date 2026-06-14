@@ -550,6 +550,68 @@
   function isSleeping(t) {
     return /\bz{2,}\b/i.test(t);  // zz, zzz, zzzz, ZZZ
   }
+  function isInPain(t) {
+    return /\bouch(ie)?\b/i.test(t)
+        || /^ow+!?$/i.test(t.trim())
+        || /\bow{2,}\b/i.test(t);
+  }
+  function isOhNo(t) {
+    return /\boh\s+no+\b/i.test(t);  // oh no, oh nooo, oh nooooooo
+  }
+
+  // --- Math calculator ---
+  // Detect any expression containing numbers + operator
+  function isMathExpression(t) {
+    return /[\d.]+\s*[+\-*x×/÷^]\s*[\d.(]/i.test(t);
+  }
+  // Extract just the math part from natural-language input
+  function extractMathExpr(raw) {
+    // Strip leading "what is" / "calculate" etc.
+    let s = raw.replace(/^(what\s+is|whats|what's|calculate|compute|solve)\s*/i, '');
+    // Remove trailing "?" or "="
+    s = s.replace(/[?=]+\s*$/g, '').trim();
+    // Keep only math-relevant chars (digits, ops, parens, dots, spaces, smart ops)
+    const m = s.match(/[\d+\-*/×÷x^().\s]+/i);
+    return m ? m[0].trim() : null;
+  }
+  function safeCalculate(expr) {
+    if (!expr) return null;
+    // Normalize multiplication / division / power symbols
+    let normalized = expr
+      .replace(/×|x/gi, '*')
+      .replace(/÷/g, '/')
+      .replace(/\^/g, '**');
+    // Sanity check: only digits, operators, parens, dots, spaces
+    if (!/^[\d+\-*/().\s]+$/.test(normalized.replace(/\*\*/g, ''))) return null;
+    // Reject empty / lone-operator inputs
+    if (!/[+\-*/]/.test(normalized)) return null;
+    try {
+      // Function constructor is safer than eval and runs in its own scope
+      // eslint-disable-next-line no-new-func
+      const result = new Function(`'use strict'; return (${normalized});`)();
+      if (typeof result !== 'number' || !isFinite(result)) return null;
+      return result;
+    } catch (_e) {
+      return null;
+    }
+  }
+  // Pretty-print: round to 3 decimals if non-integer; preserve original input
+  function formatMathResult(originalExpr, result) {
+    let display = originalExpr
+      .replace(/\*/g, ' × ')
+      .replace(/\//g, ' ÷ ')
+      .replace(/\+/g, ' + ')
+      .replace(/(?<!\*)\-/g, ' − ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    let n;
+    if (Number.isInteger(result)) {
+      n = result.toString();
+    } else {
+      n = (Math.round(result * 1000) / 1000).toString();
+    }
+    return `${display} = ${n} 🔢`;
+  }
   // --- Easter Eggs (Ocean / Night sky / Battery) ---
   function isOceanMode(t) {
     return /\bocean\s+mode\b/i.test(t)
@@ -1458,6 +1520,27 @@
       return { text: `${getCurrentDay()}, ${getCurrentDate()}. 🗓️`, type: 'bot' };
     }
 
+    // 10b. Math calculator (5+3, 12*7, 100/7, 2^10, what is 5+3)
+    if (isMathExpression(text)) {
+      const expr = extractMathExpr(rawInput);
+      if (expr) {
+        // Normalize for the calc itself
+        const normalized = expr.replace(/×|x/gi, '*').replace(/÷/g, '/');
+        const result = safeCalculate(normalized);
+        if (result === null) {
+          // Special case: division by zero
+          if (/\/\s*0(?!\d)/.test(normalized)) {
+            return { text: 'Cannot divide by zero! 🚫', type: 'bot' };
+          }
+          return { text: "Hmm, I couldn't calculate that. 🤔", type: 'bot' };
+        }
+        if (Math.abs(result) > 1e15) {
+          return { text: 'Result too big! 🤯', type: 'bot' };
+        }
+        return { text: formatMathResult(expr, result), type: 'bot' };
+      }
+    }
+
     // 11. Coin / Dice
     if (isCoinFlip(text)) {
       return { text: flipCoin(), type: 'bot' };
@@ -1544,6 +1627,16 @@
     // 13j. Sleeping (Zzz)
     if (isSleeping(text)) {
       return { text: 'Hey! Wake up! Chat with me!', type: 'bot' };
+    }
+
+    // 13k. In pain (Ouch / Ow)
+    if (isInPain(text)) {
+      return { text: 'What happened?!', type: 'bot' };
+    }
+
+    // 13l. Oh no
+    if (isOhNo(text)) {
+      return { text: 'What is it?!', type: 'bot' };
     }
 
     // 14. Mood
