@@ -22,6 +22,10 @@
     justRevealedCreator: false,
     justAnsweredGender: false,
     tdMode: null, // 'truth' | 'dare' | null
+    // April Fools — joke once per session for each question
+    aprilFoolTime: false,
+    aprilFoolDate: false,
+    aprilFoolDay: false,
   };
 
   // ---------- Jaick's Profile ----------
@@ -350,6 +354,10 @@
   function isTodayJaicksBirthday() {
     const now = new Date();
     return (now.getMonth() + 1 === JAICK.birthMonth) && (now.getDate() === JAICK.birthDay);
+  }
+  function isAprilFoolsDay() {
+    const now = new Date();
+    return now.getMonth() === 3 && now.getDate() === 1;  // April = month index 3
   }
 
   // --- Favorites ---
@@ -1345,14 +1353,35 @@
       return { text: 'How?!', type: 'bot' };
     }
 
-    // 10. Time / Date / Day
+    // 10. Time / Date / Day  (with April Fools 🃏 surprise on April 1st)
     if (isAskingTime(text)) {
+      if (isAprilFoolsDay() && !state.aprilFoolTime) {
+        state.aprilFoolTime = true;
+        return {
+          text: `It's 4:44 AM. Kidding. April fools! 🃏 It's actually ${getCurrentTime()}. ⏰`,
+          type: 'bot',
+        };
+      }
       return { text: `It's ${getCurrentTime()} right now. ⏰`, type: 'bot' };
     }
     if (isAskingDate(text)) {
+      if (isAprilFoolsDay() && !state.aprilFoolDate) {
+        state.aprilFoolDate = true;
+        return {
+          text: `It's not a day today. Just kidding! April fools! 🃏 Today is ${getCurrentDate()}. 📅`,
+          type: 'bot',
+        };
+      }
       return { text: `Today is ${getCurrentDate()}. 📅`, type: 'bot' };
     }
     if (isAskingDay(text)) {
+      if (isAprilFoolsDay() && !state.aprilFoolDay) {
+        state.aprilFoolDay = true;
+        return {
+          text: `It's Notday, April 44th, 4044. Just kidding. April fools! 🃏 It's actually ${getCurrentDay()}, ${getCurrentDate()}. 🗓️`,
+          type: 'bot',
+        };
+      }
       return { text: `${getCurrentDay()}, ${getCurrentDate()}. 🗓️`, type: 'bot' };
     }
 
