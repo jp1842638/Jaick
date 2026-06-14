@@ -369,8 +369,8 @@
     if (/[\u{1F924}\u{1F62A}\u{1F634}\u{1F4A4}]/u.test(t)) {
       return 'tired';
     }
-    // angry/stressed: 😡😠💢🤬😤😮‍💨 → randomly pick one
-    if (/[\u{1F621}\u{1F620}\u{1F4A2}\u{1F92C}\u{1F624}]/u.test(t)
+    // angry/stressed: 😡😠💢🤬😤🙄😮‍💨 → randomly pick one
+    if (/[\u{1F621}\u{1F620}\u{1F4A2}\u{1F92C}\u{1F624}\u{1F644}]/u.test(t)
         || /\u{1F62E}\u{200D}\u{1F4A8}/u.test(t)) {  // 😮‍💨 face exhaling (ZWJ)
       return Math.random() < 0.5 ? 'angry' : 'stressed';
     }
