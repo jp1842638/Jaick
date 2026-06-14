@@ -559,10 +559,77 @@
     return /\boh\s+no+\b/i.test(t);  // oh no, oh nooo, oh nooooooo
   }
 
+  // --- Days until / D-Day countdown ---
+  function isAskingDaysUntil(t) {
+    return /\b(how\s+many\s+)?days\s+(until|till|to)\b/i.test(t);
+  }
+  // Parse a target date from text. Returns { month: 0-11, day } or null.
+  function parseTargetDate(raw) {
+    const MONTHS = {
+      january: 0, jan: 0,
+      february: 1, feb: 1,
+      march: 2, mar: 2,
+      april: 3, apr: 3,
+      may: 4,
+      june: 5, jun: 5,
+      july: 6, jul: 6,
+      august: 7, aug: 7,
+      september: 8, sep: 8, sept: 8,
+      october: 9, oct: 9,
+      november: 10, nov: 10,
+      december: 11, dec: 11,
+    };
+    // "Month Day" or "Day Month"
+    const m1 = raw.match(/\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?\b/i);
+    if (m1) {
+      const month = MONTHS[m1[1].toLowerCase()];
+      const day = parseInt(m1[2], 10);
+      if (month !== undefined && day >= 1 && day <= 31) return { month, day };
+    }
+    const m1b = raw.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*\b/i);
+    if (m1b) {
+      const month = MONTHS[m1b[2].toLowerCase()];
+      const day = parseInt(m1b[1], 10);
+      if (month !== undefined && day >= 1 && day <= 31) return { month, day };
+    }
+    // "M/D" or "M-D"
+    const m2 = raw.match(/\b(\d{1,2})[\/\-](\d{1,2})\b/);
+    if (m2) {
+      const month = parseInt(m2[1], 10) - 1;
+      const day   = parseInt(m2[2], 10);
+      if (month >= 0 && month <= 11 && day >= 1 && day <= 31) return { month, day };
+    }
+    return null;
+  }
+  function calculateDaysUntil(month, day) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let target = new Date(today.getFullYear(), month, day);
+    target.setHours(0, 0, 0, 0);
+    let rolledOver = false;
+    if (target < today) {
+      target.setFullYear(target.getFullYear() + 1);
+      rolledOver = true;
+    }
+    const diffMs = target - today;
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return { days, target, rolledOver };
+  }
+  function formatTargetDate(date) {
+    const months = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+    const day = date.getDate();
+    const suffix = (n) => {
+      if (n >= 11 && n <= 13) return 'th';
+      switch (n % 10) { case 1: return 'st'; case 2: return 'nd'; case 3: return 'rd'; default: return 'th'; }
+    };
+    return `${months[date.getMonth()]} ${day}${suffix(day)}, ${date.getFullYear()}`;
+  }
+
   // --- Math calculator ---
-  // Detect any expression containing numbers + operator
+  // Detect any expression containing numbers + operator (lenient)
   function isMathExpression(t) {
-    return /[\d.]+\s*[+\-*x×/÷^]\s*[\d.(]/i.test(t);
+    return /\d\s*[+\-*x×/÷^]\s*\d/i.test(t);
   }
   // Extract just the math part from natural-language input
   function extractMathExpr(raw) {
@@ -1520,7 +1587,24 @@
       return { text: `${getCurrentDay()}, ${getCurrentDate()}. 🗓️`, type: 'bot' };
     }
 
-    // 10b. Math calculator (5+3, 12*7, 100/7, 2^10, what is 5+3)
+    // 10b. Days until / D-Day countdown — must come BEFORE math (so dates with / aren't seen as division)
+    if (isAskingDaysUntil(text)) {
+      const target = parseTargetDate(rawInput);
+      if (target) {
+        const { days, target: targetDate, rolledOver } = calculateDaysUntil(target.month, target.day);
+        if (days === 0) {
+          return { text: "That's today! 🎉", type: 'bot' };
+        }
+        const targetStr = formatTargetDate(targetDate);
+        if (rolledOver) {
+          return { text: `${days} days until ${targetStr}! 📆 (next year)`, type: 'bot' };
+        }
+        return { text: `${days} days until ${targetStr}! 📆`, type: 'bot' };
+      }
+      return { text: 'Which date? Try: "days until December 25" 📆', type: 'bot' };
+    }
+
+    // 10c. Math calculator (5+3, 12*7, 100/7, 2^10, what is 5+3)
     if (isMathExpression(text)) {
       const expr = extractMathExpr(rawInput);
       if (expr) {
