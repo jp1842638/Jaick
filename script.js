@@ -231,7 +231,8 @@
       'tell me a story', 'tell a story', 'make a story', 'create a story',
       'write a story', 'short story', 'give me a story', 'story please',
       'a story about', 'story with', 'another story', 'one more story',
-    ]) || /\bstory\b/.test(t);
+    ]) || /\bstory\b/.test(t)
+      || /\u{1F4D6}/u.test(t);  // 📖
   }
 
   function isGreeting(t) {
@@ -273,12 +274,14 @@
   function isAskingTime(t) {
     return /\bwhat\s+time\s+is\s+it\b/.test(t)
         || /\b(current|the)\s+time\b/.test(t)
-        || /\btime\s+(now|right\s+now)\b/.test(t);
+        || /\btime\s+(now|right\s+now)\b/.test(t)
+        || /[\u{23F0}\u{1F570}]/u.test(t);  // ⏰ 🕰️
   }
   function isAskingDate(t) {
     return /\b(what(\s+is|'s|s)?\s+(the\s+)?date|today's\s+date|current\s+date)\b/.test(t)
         || /\bwhat\s+is\s+today\b/.test(t)
-        || /\bwhat'?s\s+today\b/.test(t);
+        || /\bwhat'?s\s+today\b/.test(t)
+        || /[\u{1F4C6}\u{1F4C5}]/u.test(t);  // 📆 📅
   }
   function isAskingDay(t) {
     return /\bwhat\s+day\s+(is\s+it|of\s+the\s+week)\b/.test(t)
@@ -287,25 +290,37 @@
 
   // --- Coin / Dice ---
   function isCoinFlip(t) {
-    return /\b(flip\s+a\s+coin|coin\s+flip|toss\s+a\s+coin|heads\s+or\s+tails)\b/.test(t);
+    return /\b(flip\s+a\s+coin|coin\s+flip|toss\s+a\s+coin|heads\s+or\s+tails)\b/.test(t)
+        || /\u{1FA99}/u.test(t);  // 🪙
   }
   function isDiceRoll(t) {
-    return /\b(roll\s+a\s+(dice|die)|dice\s+roll|throw\s+a\s+(dice|die)|roll\s+the\s+(dice|die))\b/.test(t);
+    return /\b(roll\s+a\s+(dice|die)|dice\s+roll|throw\s+a\s+(dice|die)|roll\s+the\s+(dice|die))\b/.test(t)
+        || /\u{1F3B2}/u.test(t);  // 🎲
   }
 
   // --- Joke / Fact ---
   function isAskingJoke(t) {
     return /\b(tell\s+me\s+a\s+joke|a\s+joke|joke\s+please|make\s+me\s+laugh|something\s+funny)\b/.test(t)
-        || /^joke\b/.test(t.trim());
+        || /^joke\b/.test(t.trim())
+        || /\u{1F602}/u.test(t);  // 😂
   }
   function isAskingFact(t) {
     return /\b(fun\s+fact|random\s+fact|tell\s+me\s+a\s+fact|interesting\s+fact|did\s+you\s+know)\b/.test(t)
-        || /^fact\b/.test(t.trim());
+        || /^fact\b/.test(t.trim())
+        || /[\u{1F9E0}\u{1F4A1}]/u.test(t);  // 🧠 💡
   }
 
   // --- Rock Paper Scissors ---
   function isStartingRPS(t) {
-    return /\b(rock\s+paper\s+scissors|rps|play\s+rps|let'?s\s+play\s+(rps|rock\s+paper\s+scissors))\b/.test(t);
+    // Text trigger
+    if (/\b(rock\s+paper\s+scissors|rps|play\s+rps|let'?s\s+play\s+(rps|rock\s+paper\s+scissors))\b/.test(t)) {
+      return true;
+    }
+    // Emoji trigger: ✊ (rock) + any "paper" hand (🖐️ / ✋ / 🤚) + ✌️ (scissors), order-independent
+    const hasRock     = /\u{270A}/u.test(t);
+    const hasPaper    = /[\u{1F590}\u{270B}\u{1F91A}]/u.test(t);  // 🖐️ ✋ 🤚
+    const hasScissors = /\u{270C}/u.test(t);
+    return hasRock && hasPaper && hasScissors;
   }
   function parseRPSChoice(t) {
     if (/\brock\b/.test(t))      return 'rock';
@@ -373,6 +388,41 @@
     if (/\bfavou?rites?\b/.test(t))                     return 'all';
     return null;
   }
+  // 👍 + ❓ → ask favorites; the *companion* emoji decides the category.
+  // e.g. 👍❓🐶 → animal, 👍❓🔢 → number, 👍❓🎵 → song, 👍❓ alone → all
+  function detectFavoriteEmoji(raw) {
+    const hasThumb    = /\u{1F44D}/u.test(raw);
+    const hasQuestion = /\u{2753}/u.test(raw);
+    if (!hasThumb || !hasQuestion) return null;
+
+    // Animal emojis (broad set)
+    if (/[\u{1F400}-\u{1F43F}\u{1F980}-\u{1F9AE}\u{1F98A}\u{1F98B}\u{1F98C}\u{1F98D}\u{1F98E}\u{1F98F}\u{1F990}\u{1F991}\u{1F992}\u{1F993}\u{1F994}\u{1F995}\u{1F996}\u{1F997}\u{1F998}\u{1F999}\u{1F999}\u{1F99A}\u{1F99B}\u{1F99C}\u{1F99D}\u{1F99E}\u{1F99F}\u{1F9A0}\u{1F9A1}\u{1F9A2}\u{1F9A3}\u{1F9A4}\u{1F9A5}\u{1F9A6}\u{1F9A7}\u{1F9A8}\u{1F9A9}\u{1F9AA}\u{1F9AB}\u{1F9AC}\u{1F9AD}\u{1F9AE}\u{1FAB0}\u{1FAB1}\u{1FAB2}\u{1FAB3}\u{1FAB4}\u{1FAB5}\u{1FAB6}\u{1FABC}\u{1FABF}\u{1FAB8}\u{1FABD}\u{1FABE}\u{1F436}\u{1F431}\u{1F42D}\u{1F439}\u{1F430}\u{1F98A}\u{1F43B}\u{1F43C}\u{1F428}\u{1F42F}\u{1F981}\u{1F42E}\u{1F437}\u{1F438}\u{1F435}\u{1F648}\u{1F649}\u{1F64A}\u{1F412}\u{1F414}\u{1F427}\u{1F426}\u{1F424}\u{1F423}\u{1F425}\u{1F986}\u{1F985}\u{1F989}\u{1F987}\u{1F43A}\u{1F417}\u{1F434}\u{1F984}\u{1F41D}\u{1FAB1}\u{1F41B}\u{1F98B}\u{1F40C}\u{1F41E}\u{1F41C}\u{1FAB0}\u{1FAB2}\u{1FAB3}\u{1F99F}\u{1F997}\u{1F577}\u{1F578}\u{1F982}\u{1F422}\u{1F40D}\u{1F98E}\u{1F996}\u{1F995}\u{1F419}\u{1F991}\u{1FABC}\u{1F990}\u{1F99E}\u{1F980}\u{1F421}\u{1F420}\u{1F41F}\u{1F42C}\u{1F433}\u{1F40B}\u{1F988}\u{1F9AD}\u{1F40A}\u{1F405}\u{1F406}\u{1F993}\u{1F98D}\u{1F9A7}\u{1F9A3}\u{1F418}\u{1F99B}\u{1F98F}\u{1F42A}\u{1F42B}\u{1F992}\u{1F998}\u{1F9AC}\u{1F403}\u{1F402}\u{1F404}\u{1F40E}\u{1F416}\u{1F40F}\u{1F411}\u{1F999}\u{1F410}\u{1F98C}\u{1F415}\u{1F429}\u{1F9AE}\u{1F408}\u{1FAB6}\u{1F413}\u{1F983}\u{1F99A}\u{1F99C}\u{1F9A2}\u{1F9A9}\u{1F54A}\u{1F407}\u{1F99D}\u{1F9A8}\u{1F9A1}\u{1F9AB}\u{1F9A6}\u{1F9A5}\u{1F401}\u{1F400}\u{1F43F}\u{1F994}]/u.test(raw)) {
+      return 'animal';
+    }
+    // Number emojis: 0️⃣–9️⃣, 🔢, 🔟
+    if (/[0-9]\u{FE0F}?\u{20E3}/u.test(raw) || /[\u{1F522}\u{1F51F}]/u.test(raw)) {
+      return 'number';
+    }
+    // Music / song: 🎵 🎶 🎤 🎧
+    if (/[\u{1F3B5}\u{1F3B6}\u{1F3A4}\u{1F3A7}]/u.test(raw)) {
+      return 'song';
+    }
+    // Food: 🍔🍕🍟🍎🍰 etc.
+    if (/[\u{1F354}-\u{1F37F}\u{1F950}-\u{1F96F}\u{1F9C0}-\u{1F9CB}\u{1F347}-\u{1F353}]/u.test(raw)) {
+      return 'food';
+    }
+    // Color: 🎨 or color squares/circles
+    if (/[\u{1F3A8}\u{1F534}\u{1F7E0}\u{1F7E1}\u{1F7E2}\u{1F535}\u{1F7E3}\u{1F7E4}\u{26AB}\u{26AA}\u{1F7E5}\u{1F7E7}\u{1F7E8}\u{1F7E9}\u{1F7E6}\u{1F7EA}\u{1F7EB}]/u.test(raw)) {
+      return 'color';
+    }
+    // Movie: 🎬 🎥 🎞️
+    if (/[\u{1F3AC}\u{1F3A5}\u{1F39E}]/u.test(raw)) {
+      return 'movie';
+    }
+    // Vocaloid: 🎤 🎵 already covered → vocaloid only via specific text;
+    // we'll treat any other companion as "all"
+    return 'all';
+  }
 
   // --- April Fools ---
   function isAskingAprilFools(t) {
@@ -414,7 +464,8 @@
 
   // --- Reverse text ---
   function isReverseRequest(t) {
-    return /\breverse\b/.test(t) || /\bbackwards?\b/.test(t);
+    return /\breverse\b/.test(t) || /\bbackwards?\b/.test(t)
+        || /\u{1F501}/u.test(t);  // 🔁
   }
   function getReverseTarget(raw) {
     let m = raw.match(/reverse\s*:?\s*(.+)/i);
@@ -423,6 +474,9 @@
     if (m) return m[1].trim();
     m = raw.match(/(.+?)\s+backwards?/i);
     if (m) return m[1].replace(/^(say|spell)\s+/i, '').trim();
+    // 🔁 emoji shortcut: text after the 🔁 is the target
+    m = raw.match(/\u{1F501}\s*[:：]?\s*(.+)/u);
+    if (m) return m[1].trim();
     return null;
   }
 
@@ -468,7 +522,8 @@
   function isStartingTruthOrDare(t) {
     return /\btruth\s+or\s+dare\b/.test(t)
         || /\bplay\s+(truth\s+or\s+dare|tod)\b/.test(t)
-        || /^tod\b/.test(t.trim());
+        || /^tod\b/.test(t.trim())
+        || (/\u{1F92B}/u.test(t) && /\u{1F336}/u.test(t));  // 🤫 + 🌶️ both
   }
   // Extract content between quotes — match double-quotes to double-quotes,
   // and single-quotes to single-quotes (so apostrophes inside double-quoted
@@ -714,7 +769,8 @@
     return /\bhere'?s\s+a\s+battery\b/i.test(t)
         || /\bhave\s+a\s+battery\b/i.test(t)
         || /\btake\s+(this\s+)?battery\b/i.test(t)
-        || /\bi\s+brought\s+(you\s+)?a\s+battery\b/i.test(t);
+        || /\bi\s+brought\s+(you\s+)?a\s+battery\b/i.test(t)
+        || /[\u{26A1}\u{1F50B}\u{1F50C}]/u.test(t);  // ⚡ 🔋 🔌
   }
   function isExitBoth(t) {
     return /\bexit\s+(both|all)\b/i.test(t)
@@ -722,13 +778,15 @@
   }
   function isCatchingFish(t) {
     return /\bcatch\s+(a\s+|some\s+)?fish(es)?\b/i.test(t)
-        || /\bgo\s+fishing\b/i.test(t);
+        || /\bgo\s+fishing\b/i.test(t)
+        || /\u{1F3A3}/u.test(t);  // 🎣 fishing pole emoji
   }
   function isMakingWish(t) {
     return /\bmy\s+wish\s+is\b/i.test(t)
         || /\bi\s+wish\s+(for|to)\b/i.test(t)
         || /\bi\s+want\s+to\s+wish\s+for\b/i.test(t)
-        || /\bmake\s+a\s+wish\b/i.test(t);
+        || /\bmake\s+a\s+wish\b/i.test(t)
+        || /\u{1F52E}/u.test(t);  // 🔮 crystal ball emoji
   }
   // --- Valentine mode (exclusive — turns off ocean/night-sky) ---
   function isValentineMode(t) {
@@ -1813,10 +1871,16 @@
       };
     }
 
-    // 9. Favorites
+    // 9. Favorites (text or 👍❓ emoji)
     const favKind = detectFavorite(text);
     if (favKind) {
       return { text: favoriteResponse(favKind), type: 'bot' };
+    }
+    {
+      const favKindEmoji = detectFavoriteEmoji(rawInput);
+      if (favKindEmoji) {
+        return { text: favoriteResponse(favKindEmoji), type: 'bot' };
+      }
     }
 
     // 9b. April Fools
