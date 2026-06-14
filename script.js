@@ -701,6 +701,11 @@
   function isOhNo(t) {
     return /\boh\s+no+\b/i.test(t);  // oh no, oh nooo, oh nooooooo
   }
+  // 🍀 four leaf clover — too lucky if 5+ are present
+  function isTooLucky(t) {
+    const matches = t.match(/\u{1F340}/gu);
+    return matches && matches.length >= 5;
+  }
 
   // --- Days until / D-Day countdown ---
   function isAskingDaysUntil(t) {
@@ -2290,6 +2295,11 @@
       };
     }
 
+    // 26b. Too lucky — 5+ 🍀 → error response (just before fallback)
+    if (isTooLucky(rawInput)) {
+      return { text: 'Error707: Too lucky 🍀', type: 'error' };
+    }
+
     // 27. Fallback
     return { text: pickRandom(fallbackReplies), type: 'bot' };
   }
@@ -2301,6 +2311,24 @@
     e.preventDefault();
     const value = userInput.value.trim();
     if (!value) return;
+
+    // Slash command: /clear → wipe chat with sweeping broom overlay
+    if (value.toLowerCase() === '/clear') {
+      userInput.value = '';
+      const overlay = document.getElementById('clearOverlay');
+      if (overlay) overlay.classList.remove('hidden');
+      // Wait 5 seconds while the broom sweeps, then clear & show messages
+      setTimeout(() => {
+        chatBox.innerHTML = '';
+        if (overlay) overlay.classList.add('hidden');
+        addMessage('Chat cleared! ✨🧹', 'bot');
+        setTimeout(() => {
+          addMessage("Hi! I'm Jaick. How can I help you today? (English only, please ✨)", 'bot');
+          userInput.focus();
+        }, 400);
+      }, 5000);
+      return;
+    }
 
     addMessage(value, 'user');
     userInput.value = '';
