@@ -1353,7 +1353,7 @@
       return { text: `Today is ${getCurrentDate()}. 📅`, type: 'bot' };
     }
     if (isAskingDay(text)) {
-      return { text: `It's ${getCurrentDay()}! 🗓️`, type: 'bot' };
+      return { text: `${getCurrentDay()}, ${getCurrentDate()}. 🗓️`, type: 'bot' };
     }
 
     // 11. Coin / Dice
