@@ -316,16 +316,27 @@
     if (/\b(rock\s+paper\s+scissors|rps|play\s+rps|let'?s\s+play\s+(rps|rock\s+paper\s+scissors))\b/.test(t)) {
       return true;
     }
-    // Emoji trigger: ✊ (rock) + any "paper" hand (🖐️ / ✋ / 🤚) + ✌️ (scissors), order-independent
-    const hasRock     = /\u{270A}/u.test(t);
-    const hasPaper    = /[\u{1F590}\u{270B}\u{1F91A}]/u.test(t);  // 🖐️ ✋ 🤚
-    const hasScissors = /\u{270C}/u.test(t);
-    return hasRock && hasPaper && hasScissors;
+    // Hand emoji trigger: ✊ (rock) + paper hand (🖐️/✋/🤚) + ✌️ (scissors)
+    const hasRockHand     = /\u{270A}/u.test(t);
+    const hasPaperHand    = /[\u{1F590}\u{270B}\u{1F91A}]/u.test(t);
+    const hasScissorsHand = /\u{270C}/u.test(t);
+    if (hasRockHand && hasPaperHand && hasScissorsHand) return true;
+    // Object emoji trigger: 🪨 + 📄 + ✂️ (any order)
+    const hasRockObj     = /\u{1FAA8}/u.test(t);                  // 🪨
+    const hasPaperObj    = /\u{1F4C4}/u.test(t);                  // 📄
+    const hasScissorsObj = /[\u{2702}\u{2704}]/u.test(t);         // ✂️ ✄
+    if (hasRockObj && hasPaperObj && hasScissorsObj) return true;
+    return false;
   }
   function parseRPSChoice(t) {
+    // Text
     if (/\brock\b/.test(t))      return 'rock';
     if (/\bpaper\b/.test(t))     return 'paper';
     if (/\bscissors?\b/.test(t)) return 'scissors';
+    // Emoji choices
+    if (/[\u{270A}\u{1FAA8}]/u.test(t))                    return 'rock';      // ✊ 🪨
+    if (/[\u{1F590}\u{270B}\u{1F91A}\u{1F4C4}]/u.test(t))  return 'paper';     // 🖐️ ✋ 🤚 📄
+    if (/[\u{270C}\u{2702}\u{2704}]/u.test(t))             return 'scissors';  // ✌️ ✂️ ✄
     return null;
   }
 
