@@ -1439,12 +1439,7 @@
     // Make a wish (state-dependent)
     if (isMakingWish(text)) {
       if (isNightSkyActive()) {
-        return {
-          text: Math.random() < 0.5
-            ? 'Your wish will come true. ✨'
-            : 'Your wish cannot come true. 🌑',
-          type: 'bot',
-        };
+        return { text: 'Your wish will come true. ✨', type: 'bot' };
       }
       return { text: 'Look up at the night sky first to make a wish! 🌠', type: 'bot' };
     }
