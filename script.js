@@ -354,6 +354,47 @@
     if (moodPattern('stressed|overwhelmed'))                    return 'stressed';
     if (moodPattern('hungry|starving'))                         return 'hungry';
     if (moodPattern('thirsty|parched|dehydrated'))              return 'thirsty';
+
+    // --- Emoji-based mood detection ---
+    // sad: 😔😕😟🙁☹️😥😞😓💔❤️‍🩹😭😩😫
+    if (/[\u{1F614}\u{1F615}\u{1F61F}\u{1F641}\u{2639}\u{1F625}\u{1F61E}\u{1F613}\u{1F494}\u{1F62D}\u{1F629}\u{1F62B}]/u.test(t)
+        || /\u{2764}\u{FE0F}?\u{200D}\u{1FA79}/u.test(t)) {
+      return 'sad';
+    }
+    // happy: 😆😍🤩😀😃😄😁😊🥰☺️😙😚
+    if (/[\u{1F606}\u{1F60D}\u{1F929}\u{1F600}\u{1F603}\u{1F604}\u{1F601}\u{1F60A}\u{1F970}\u{263A}\u{1F619}\u{1F61A}]/u.test(t)) {
+      return 'happy';
+    }
+    // tired: 🤤😪😴💤
+    if (/[\u{1F924}\u{1F62A}\u{1F634}\u{1F4A4}]/u.test(t)) {
+      return 'tired';
+    }
+    // angry/stressed: 😡😠💢🤬😤 → randomly pick one
+    if (/[\u{1F621}\u{1F620}\u{1F4A2}\u{1F92C}\u{1F624}]/u.test(t)) {
+      return Math.random() < 0.5 ? 'angry' : 'stressed';
+    }
+    // scared: 😨😱😰
+    if (/[\u{1F628}\u{1F631}\u{1F630}]/u.test(t)) {
+      return 'scared';
+    }
+    // lonely: 😢🥲
+    if (/[\u{1F622}\u{1F972}]/u.test(t)) {
+      return 'lonely';
+    }
+    // hungry: 80+ food emojis (broad ranges)
+    // 🍏-🍯 covers most fruit/desserts; 🥐-🥡 covers prepared foods; 🦀🦐🦑🦞🦪 seafood
+    if (/[\u{1F34F}-\u{1F37F}\u{1F950}-\u{1F96F}\u{1F9C0}-\u{1F9CB}\u{1F347}-\u{1F353}\u{1F980}-\u{1F99F}]/u.test(t)
+        && !/\u{1F382}/u.test(t)  // exclude 🎂 (birthday cake — birthday mode)
+       ) {
+      // But require the food emoji is NOT a birthday-trigger
+      // (birthday matchers run first, so this is just a guard)
+      return 'hungry';
+    }
+    // thirsty: 🍼🥛☕🫖🍵🍶🍾🍷🍸🍹🍺🍻🥂🥃🥤🧋🧃🧉🧊
+    if (/[\u{1F37C}\u{1F95B}\u{2615}\u{1FAD6}\u{1F375}\u{1F376}\u{1F37E}\u{1F377}\u{1F378}\u{1F379}\u{1F37A}\u{1F37B}\u{1F942}\u{1F943}\u{1F964}\u{1F9CB}\u{1F9C3}\u{1F9C9}\u{1F9CA}]/u.test(t)) {
+      return 'thirsty';
+    }
+
     return null;
   }
 
@@ -446,17 +487,20 @@
   function isSayingCold(t) {
     return /\b(it'?s|it\s+is)\s+(so\s+|really\s+|very\s+)?cold\b/.test(t)
         || /\bso\s+cold\b/.test(t)
-        || /\bfreezing\b/.test(t);
+        || /\bfreezing\b/.test(t)
+        || /[\u{2744}\u{1F976}]/u.test(t);  // ❄️ 🥶
   }
   function isSayingSnowing(t) {
     return /\b(it'?s|it\s+is)\s+snowing\b/.test(t)
         || /\bsnowing\b/.test(t)
-        || /\b(it'?s|it\s+is)\s+snowy\b/.test(t);
+        || /\b(it'?s|it\s+is)\s+snowy\b/.test(t)
+        || /\u{1F328}/u.test(t);  // 🌨️
   }
   function isSayingHot(t) {
     return /\b(it'?s|it\s+is)\s+(so\s+|really\s+|very\s+)?hot\b/.test(t)
         || /\bso\s+hot\b/.test(t)
-        || /\b(boiling|scorching)\b/.test(t);
+        || /\b(boiling|scorching)\b/.test(t)
+        || /[\u{1F975}\u{1F525}]/u.test(t);  // 🥵 🔥
   }
 
   // --- Season helpers (Northern hemisphere) ---
@@ -594,7 +638,8 @@
         || /\blo+l\b/i.test(t)                 // lol, looool
         || /\b(?:lol){2,}\b/i.test(t)          // lolol, lololol
         || /\blmf?ao\b/i.test(t)               // lmao, lmfao
-        || /\brofl\b/i.test(t);
+        || /\brofl\b/i.test(t)
+        || /\u{1F923}/u.test(t);  // 🤣 rolling on the floor laughing
   }
   function isCheering(t) {
     return /\bya+y+\b/i.test(t)                // yay, yaay, yayyy
@@ -865,8 +910,8 @@
     if (hasGalaxy)             return 'night-sky';
     if (hasOcean)              return 'ocean';
     // Heart-type emojis → Valentine
-    // 💘💝💖💗💓💞💕💟❣️❤️🧡💛💚🩵💙💜🤎🖤🩶🤍
-    if (/[\u{1F498}\u{1F49D}\u{1F496}\u{1F497}\u{1F493}\u{1F49E}\u{1F495}\u{1F49F}\u{2763}\u{2764}\u{1F9E1}\u{1F49B}\u{1F49A}\u{1FA75}\u{1F499}\u{1F49C}\u{1F90E}\u{1F5A4}\u{1FA76}\u{1F90D}]/u.test(raw)) {
+    // 💘💝💖💗💓💞💕💟❣️❤️🧡💛💚🩵💙💜🤎🖤🩶🤍 + 😘 (kiss)
+    if (/[\u{1F498}\u{1F49D}\u{1F496}\u{1F497}\u{1F493}\u{1F49E}\u{1F495}\u{1F49F}\u{2763}\u{2764}\u{1F9E1}\u{1F49B}\u{1F49A}\u{1FA75}\u{1F499}\u{1F49C}\u{1F90E}\u{1F5A4}\u{1FA76}\u{1F90D}\u{1F618}]/u.test(raw)) {
       return 'valentine';
     }
     // Birthday-type emojis → Birthday
@@ -2325,7 +2370,7 @@
       label: 'Objects',
       emojis: [
         '💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','🧾',
-        '💎','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🪤','🧱',
+        '💎','🪨','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🪤','🧱',
         '⛓️','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️','🚬','⚰️','🪦','⚱️','🏺',
         '🔮','📿','🧿','🪬','💈','⚗️','🔭','🔬','🕳️','🩹','🩺','💊','💉','🩸','🧬',
         '🦠','🧫','🧪','🌡️','🧹','🪠','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥',
@@ -2545,7 +2590,7 @@
     // Objects (popular)
     '💡':'light bulb idea','🔦':'flashlight','🕯️':'candle','💸':'money flying',
     '💵':'dollar','💴':'yen','💶':'euro','💷':'pound','🪙':'coin','💰':'money bag',
-    '💳':'credit card','💎':'gem diamond','⚖️':'balance scale','🔧':'wrench',
+    '💳':'credit card','💎':'gem diamond','🪨':'rock stone boulder','⚖️':'balance scale','🔧':'wrench',
     '🔨':'hammer','🛠️':'tools','⚙️':'gear','🔩':'nut bolt',
     '🧲':'magnet','🔫':'water pistol gun','💣':'bomb','🧨':'firecracker','🪓':'axe',
     '🔪':'knife kitchen','🗡️':'dagger','⚔️':'crossed swords','🛡️':'shield',
