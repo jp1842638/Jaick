@@ -547,6 +547,9 @@
   function isFrustrated(t) {
     return /\bug+h+\b/i.test(t);  // ugh, uggh, ughh, ughhhh
   }
+  function isSleeping(t) {
+    return /\bz{2,}\b/i.test(t);  // zz, zzz, zzzz, ZZZ
+  }
   // --- Easter Eggs (Ocean / Night sky / Battery) ---
   function isOceanMode(t) {
     return /\bocean\s+mode\b/i.test(t)
@@ -586,10 +589,22 @@
         || /\bi\s+want\s+to\s+wish\s+for\b/i.test(t)
         || /\bmake\s+a\s+wish\b/i.test(t);
   }
+  // --- Valentine mode (exclusive — turns off ocean/night-sky) ---
+  function isValentineMode(t) {
+    return /\bvalentine'?s?\s+mode\b/i.test(t)
+        || /\bhappy\s+valentine'?s?(\s+day)?\b/i.test(t)
+        || /\bvalentine'?s?\s+day\b/i.test(t)
+        || /\b(start|enable|activate|enter)\s+valentine'?s?(\s+mode)?\b/i.test(t)
+        || /^valentines?\s*$/i.test(t.trim());
+  }
+  function isExitValentine(t) {
+    return /\b(exit|stop|leave|end|quit|disable)\s+valentine'?s?(\s+mode)?\b/i.test(t);
+  }
   // State helpers — read body classes
   function isOceanActive()    { return document.body.classList.contains('ocean-mode'); }
   function isNightSkyActive() { return document.body.classList.contains('night-sky-mode'); }
   function isNightOcean()     { return isOceanActive() && isNightSkyActive(); }
+  function isValentineActive() { return document.body.classList.contains('valentine-mode'); }
 
   function isCursing(t) {
     return /\bf(?:u|\*|-)c?k(?:ing|ed|er|s)?\b/i.test(t)        // fuck, fucking, fck, f*ck, f-ck
@@ -1027,6 +1042,50 @@
     }
   }
 
+  // ============================================================
+  // Valentine Mode (exclusive — auto-disables ocean / night-sky)
+  // ============================================================
+  const HEART_EMOJIS = ['💖', '💕', '❤️', '🩷', '💗', '💓', '💝'];
+
+  function enableValentineMode() {
+    if (document.body.classList.contains('valentine-mode')) return;
+    // Auto-disable other modes (Valentine is exclusive)
+    disableOceanMode();
+    disableNightSkyMode();
+
+    document.body.classList.add('valentine-mode');
+
+    const layer = document.createElement('div');
+    layer.id = 'valentineLayer';
+    layer.className = 'fx-layer';
+    document.body.appendChild(layer);
+
+    // 25 falling hearts
+    for (let i = 0; i < 25; i++) {
+      const emoji = HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)];
+      const left  = Math.random() * 100;
+      const dur   = 5 + Math.random() * 7;
+      const delay = Math.random() * dur;
+      const size  = 22 + Math.random() * 22;
+      const heart = document.createElement('div');
+      heart.className = 'heart-fall';
+      heart.textContent = emoji;
+      Object.assign(heart.style, {
+        left: `${left}%`,
+        fontSize: `${size}px`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+      layer.appendChild(heart);
+    }
+  }
+
+  function disableValentineMode() {
+    document.body.classList.remove('valentine-mode');
+    const layer = document.getElementById('valentineLayer');
+    if (layer) layer.remove();
+  }
+
   // Web Audio "charge" sound: rising square wave
   function playChargeSound() {
     try {
@@ -1168,11 +1227,11 @@
 
     // Exit both first (so it isn't caught by single exit matchers)
     if (isExitBoth(text)) {
-      const wasOcean = isOceanActive();
-      const wasNight = isNightSkyActive();
+      const wasAny = isOceanActive() || isNightSkyActive() || isValentineActive();
       disableOceanMode();
       disableNightSkyMode();
-      if (wasOcean || wasNight) {
+      disableValentineMode();
+      if (wasAny) {
         return { text: '✨ Back to normal!', type: 'bot' };
       }
       return { text: 'There was nothing to exit, but okay! ✨', type: 'bot' };
@@ -1186,7 +1245,20 @@
       disableNightSkyMode();
       return { text: '☀️ Welcome back!', type: 'bot' };
     }
+    // Valentine first (exclusive)
+    if (isExitValentine(text)) {
+      disableValentineMode();
+      return { text: 'Until next year! 💌', type: 'bot' };
+    }
+    if (isValentineMode(text)) {
+      // enableValentineMode handles disabling ocean/night-sky internally
+      enableValentineMode();
+      return { text: "Happy Valentine's Day! 💕", type: 'bot' };
+    }
+
     if (isOceanMode(text)) {
+      // Disable Valentine if it was on (exclusive modes)
+      if (isValentineActive()) disableValentineMode();
       enableOceanMode();
       // If night sky was already active → night ocean!
       if (isNightSkyActive()) {
@@ -1195,6 +1267,7 @@
       return { text: '🌊 Welcome to the deep blue! Tap into the ocean mode!', type: 'bot' };
     }
     if (isNightSkyMode(text)) {
+      if (isValentineActive()) disableValentineMode();
       enableNightSkyMode();
       // If ocean was already active → night ocean!
       if (isOceanActive()) {
@@ -1466,6 +1539,11 @@
     // 13i. Frustrated (Ugh)
     if (isFrustrated(text)) {
       return { text: "What's wrong?", type: 'bot' };
+    }
+
+    // 13j. Sleeping (Zzz)
+    if (isSleeping(text)) {
+      return { text: 'Hey! Wake up! Chat with me!', type: 'bot' };
     }
 
     // 14. Mood
