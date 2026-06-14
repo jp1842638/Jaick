@@ -563,7 +563,7 @@
   function isAskingDaysUntil(t) {
     return /\b(how\s+many\s+)?days\s+(until|till|to)\b/i.test(t);
   }
-  // Parse a target date from text. Returns { month: 0-11, day } or null.
+  // Parse a target date from text. Returns { month: 0-11, day, year? } or null.
   function parseTargetDate(raw) {
     const MONTHS = {
       january: 0, jan: 0,
@@ -579,38 +579,50 @@
       november: 10, nov: 10,
       december: 11, dec: 11,
     };
-    // "Month Day" or "Day Month"
-    const m1 = raw.match(/\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?\b/i);
+    // "Month Day [Year]"  e.g. "June 1", "June 1st", "June 1, 2028", "June 1 2028"
+    const m1 = raw.match(/\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,]+(\d{4}))?\b/i);
     if (m1) {
       const month = MONTHS[m1[1].toLowerCase()];
-      const day = parseInt(m1[2], 10);
-      if (month !== undefined && day >= 1 && day <= 31) return { month, day };
+      const day   = parseInt(m1[2], 10);
+      const year  = m1[3] ? parseInt(m1[3], 10) : undefined;
+      if (month !== undefined && day >= 1 && day <= 31) return { month, day, year };
     }
-    const m1b = raw.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*\b/i);
+    // "Day [of] Month [Year]"  e.g. "1st of June", "1 June 2028"
+    const m1b = raw.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)[a-z]*(?:[\s,]+(\d{4}))?\b/i);
     if (m1b) {
       const month = MONTHS[m1b[2].toLowerCase()];
-      const day = parseInt(m1b[1], 10);
-      if (month !== undefined && day >= 1 && day <= 31) return { month, day };
+      const day   = parseInt(m1b[1], 10);
+      const year  = m1b[3] ? parseInt(m1b[3], 10) : undefined;
+      if (month !== undefined && day >= 1 && day <= 31) return { month, day, year };
     }
-    // "M/D" or "M-D"
-    const m2 = raw.match(/\b(\d{1,2})[\/\-](\d{1,2})\b/);
+    // "M/D[/Y]" or "M-D[-Y]"
+    const m2 = raw.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{4}))?\b/);
     if (m2) {
       const month = parseInt(m2[1], 10) - 1;
       const day   = parseInt(m2[2], 10);
-      if (month >= 0 && month <= 11 && day >= 1 && day <= 31) return { month, day };
+      const year  = m2[3] ? parseInt(m2[3], 10) : undefined;
+      if (month >= 0 && month <= 11 && day >= 1 && day <= 31) return { month, day, year };
     }
     return null;
   }
-  function calculateDaysUntil(month, day) {
+  function calculateDaysUntil(month, day, year) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    let target = new Date(today.getFullYear(), month, day);
-    target.setHours(0, 0, 0, 0);
+    let target;
     let rolledOver = false;
-    if (target < today) {
-      target.setFullYear(target.getFullYear() + 1);
-      rolledOver = true;
+    if (year !== undefined) {
+      // Year explicitly given — use it as-is
+      target = new Date(year, month, day);
+    } else {
+      // No year → assume this year, or roll over to next year if past
+      target = new Date(today.getFullYear(), month, day);
+      target.setHours(0, 0, 0, 0);
+      if (target < today) {
+        target.setFullYear(target.getFullYear() + 1);
+        rolledOver = true;
+      }
     }
+    target.setHours(0, 0, 0, 0);
     const diffMs = target - today;
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     return { days, target, rolledOver };
@@ -1591,11 +1603,15 @@
     if (isAskingDaysUntil(text)) {
       const target = parseTargetDate(rawInput);
       if (target) {
-        const { days, target: targetDate, rolledOver } = calculateDaysUntil(target.month, target.day);
+        const { days, target: targetDate, rolledOver } =
+          calculateDaysUntil(target.month, target.day, target.year);
+        const targetStr = formatTargetDate(targetDate);
         if (days === 0) {
           return { text: "That's today! 🎉", type: 'bot' };
         }
-        const targetStr = formatTargetDate(targetDate);
+        if (days < 0) {
+          return { text: `${Math.abs(days)} days since ${targetStr}. 📆`, type: 'bot' };
+        }
         if (rolledOver) {
           return { text: `${days} days until ${targetStr}! 📆 (next year)`, type: 'bot' };
         }
