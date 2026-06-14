@@ -22,6 +22,7 @@
       <div id="chatBox" class="chat-box" aria-live="polite"></div>
 
       <form id="chatForm" class="chat-form" autocomplete="off">
+        <button type="button" id="emojiBtn" class="emoji-btn" aria-label="Insert emoji">🙂</button>
         <input
           id="userInput"
           type="text"
@@ -33,6 +34,13 @@
           <span>Send</span>
         </button>
       </form>
+
+      <!-- Emoji Picker -->
+      <div id="emojiPicker" class="emoji-picker hidden" role="dialog" aria-label="Emoji picker">
+        <input type="text" id="emojiSearch" class="emoji-search" placeholder="🔍 Search emoji..." aria-label="Search emoji" />
+        <div class="emoji-tabs" id="emojiTabs"></div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
     </main>
 
     <footer class="footer">
