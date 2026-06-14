@@ -369,8 +369,9 @@
     if (/[\u{1F924}\u{1F62A}\u{1F634}\u{1F4A4}]/u.test(t)) {
       return 'tired';
     }
-    // angry/stressed: 😡😠💢🤬😤 → randomly pick one
-    if (/[\u{1F621}\u{1F620}\u{1F4A2}\u{1F92C}\u{1F624}]/u.test(t)) {
+    // angry/stressed: 😡😠💢🤬😤😮‍💨 → randomly pick one
+    if (/[\u{1F621}\u{1F620}\u{1F4A2}\u{1F92C}\u{1F624}]/u.test(t)
+        || /\u{1F62E}\u{200D}\u{1F4A8}/u.test(t)) {  // 😮‍💨 face exhaling (ZWJ)
       return Math.random() < 0.5 ? 'angry' : 'stressed';
     }
     // scared: 😨😱😰
@@ -653,7 +654,16 @@
   }
   function isHmm(t) {
     return /\bhm+\b/i.test(t)        // hm, hmm, hmmmm
-        || /\bhmm+m*\b/i.test(t);    // (redundant safety)
+        || /\bhmm+m*\b/i.test(t)     // (redundant safety)
+        || /\u{1F914}/u.test(t);     // 🤔 thinking face
+  }
+  // 🤢 nauseated face — Ocean-mode dependent reaction
+  function isSuffocating(t) {
+    return /\u{1F922}/u.test(t);  // 🤢
+  }
+  // 🤮 vomit face — Valentine-mode dependent reaction
+  function isGrossed(t) {
+    return /\u{1F92E}/u.test(t);  // 🤮
   }
   function isFrustrated(t) {
     return /\bug+h+\b/i.test(t);  // ugh, uggh, ughh, ughhhh
@@ -1765,6 +1775,24 @@
     if (isGivingBattery(text)) {
       triggerBatteryEffect();
       return { text: 'Yum!', type: 'bot' };
+    }
+
+    // 🤢 Suffocating reaction — different in / out of ocean
+    if (isSuffocating(text)) {
+      if (isOceanActive()) {
+        // Auto-disable ocean (only ocean — night sky stays) after 3 seconds
+        setTimeout(() => disableOceanMode(), 3000);
+        return { text: "Oh no! I'll bring you back to the surface! 🚨🌊", type: 'bot' };
+      }
+      return { text: 'Why are you holding your breath? Start breathing now! 🌬️💨', type: 'bot' };
+    }
+
+    // 🤮 Gross reaction — different in / out of valentine
+    if (isGrossed(text)) {
+      if (isValentineActive()) {
+        return { text: 'Yeah, I am single too. 🤮', type: 'bot' };
+      }
+      return { text: 'Oh no! Why are you barfing!?', type: 'bot' };
     }
 
     // Emoji shortcut → activate corresponding mode (after text matchers above
