@@ -741,11 +741,22 @@
   function isExitValentine(t) {
     return /\b(exit|stop|leave|end|quit|disable)\s+valentine'?s?(\s+mode)?\b/i.test(t);
   }
+  // --- Birthday mode (exclusive — auto-disables all other modes) ---
+  function isBirthdayMode(t) {
+    return /\btoday\s+is\s+my\s+birthday\b/i.test(t)
+        || /\bit'?s\s+my\s+birthday\b/i.test(t)
+        || /\bbirthday\s+mode\b/i.test(t)
+        || /\b(start|enable|activate|enter)\s+birthday(\s+mode)?\b/i.test(t);
+  }
+  function isExitBirthday(t) {
+    return /\b(exit|stop|leave|end|quit|disable)\s+birthday(\s+mode)?\b/i.test(t);
+  }
   // State helpers — read body classes
   function isOceanActive()    { return document.body.classList.contains('ocean-mode'); }
   function isNightSkyActive() { return document.body.classList.contains('night-sky-mode'); }
   function isNightOcean()     { return isOceanActive() && isNightSkyActive(); }
   function isValentineActive() { return document.body.classList.contains('valentine-mode'); }
+  function isBirthdayActive() { return document.body.classList.contains('birthday-mode'); }
 
   function isCursing(t) {
     return /\bf(?:u|\*|-)c?k(?:ing|ed|er|s)?\b/i.test(t)        // fuck, fucking, fck, f*ck, f-ck
@@ -1227,6 +1238,122 @@
     if (layer) layer.remove();
   }
 
+  // ============================================================
+  // Birthday Mode (exclusive — pastel rainbow + cake + confetti + song)
+  // ============================================================
+  const CONFETTI_COLORS = ['#ff6b6b', '#ffa94d', '#ffd43b', '#51cf66', '#339af0', '#9775fa'];
+
+  let birthdaySongTimers = [];
+
+  function enableBirthdayMode() {
+    if (document.body.classList.contains('birthday-mode')) return;
+    // Auto-disable all other modes (exclusive)
+    disableOceanMode();
+    disableNightSkyMode();
+    disableValentineMode();
+
+    document.body.classList.add('birthday-mode');
+
+    const layer = document.createElement('div');
+    layer.id = 'birthdayLayer';
+    layer.className = 'fx-layer';
+    document.body.appendChild(layer);
+
+    // Big cake in the center-bottom
+    const cake = document.createElement('div');
+    cake.className = 'birthday-cake';
+    cake.textContent = '🎂';
+    layer.appendChild(cake);
+
+    // 40 rainbow confetti pieces falling
+    for (let i = 0; i < 40; i++) {
+      const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      const left  = Math.random() * 100;
+      const dur   = 4 + Math.random() * 5;
+      const delay = Math.random() * dur;
+      const size  = 8 + Math.random() * 10;
+      const conf  = document.createElement('div');
+      conf.className = 'confetti-fall';
+      Object.assign(conf.style, {
+        left: `${left}%`,
+        width: `${size}px`,
+        height: `${size * 1.5}px`,
+        background: color,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+      layer.appendChild(conf);
+    }
+
+    // Play "Happy Birthday" on a synth xylophone
+    playBirthdaySong();
+  }
+
+  function disableBirthdayMode() {
+    document.body.classList.remove('birthday-mode');
+    const layer = document.getElementById('birthdayLayer');
+    if (layer) layer.remove();
+    // Cancel any pending notes
+    birthdaySongTimers.forEach(t => clearTimeout(t));
+    birthdaySongTimers = [];
+  }
+
+  // Play a note with a xylophone-like envelope
+  function playXyloNote(ctx, freq, startTime, duration) {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, startTime);
+    // Sharp attack, quick decay (xylophone-ish)
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+  }
+
+  function playBirthdaySong() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      // Note frequencies (Hz)
+      const F = {
+        C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00,
+        A4: 440.00, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46,
+      };
+      // "Happy Birthday to You" in C major
+      // Each entry: [frequency, beats]
+      const beat = 0.4; // seconds per beat
+      const song = [
+        // Happy birth-day to you
+        [F.C4, 0.75], [F.C4, 0.25], [F.D4, 1], [F.C4, 1], [F.F4, 1], [F.E4, 2],
+        // Happy birth-day to you
+        [F.C4, 0.75], [F.C4, 0.25], [F.D4, 1], [F.C4, 1], [F.G4, 1], [F.F4, 2],
+        // Happy birth-day dear ___
+        [F.C4, 0.75], [F.C4, 0.25], [F.C5, 1], [F.A4, 1], [F.F4, 1], [F.E4, 1], [F.D4, 2],
+        // Happy birth-day to you
+        [F.B4, 0.75], [F.B4, 0.25], [F.A4, 1], [F.F4, 1], [F.G4, 1], [F.F4, 2],
+      ];
+      let t = ctx.currentTime + 0.1;
+      song.forEach(([freq, beats]) => {
+        const dur = beats * beat;
+        playXyloNote(ctx, freq, t, dur * 0.9);
+        t += dur;
+      });
+      // Close context after song ends
+      const total = (t - ctx.currentTime + 0.5) * 1000;
+      const tid = setTimeout(() => {
+        if (ctx.close) ctx.close().catch(() => {});
+      }, total);
+      birthdaySongTimers.push(tid);
+    } catch (e) {
+      /* silent fail */
+    }
+  }
+
   // Web Audio "charge" sound: rising square wave
   function playChargeSound() {
     try {
@@ -1368,10 +1495,11 @@
 
     // Exit both first (so it isn't caught by single exit matchers)
     if (isExitBoth(text)) {
-      const wasAny = isOceanActive() || isNightSkyActive() || isValentineActive();
+      const wasAny = isOceanActive() || isNightSkyActive() || isValentineActive() || isBirthdayActive();
       disableOceanMode();
       disableNightSkyMode();
       disableValentineMode();
+      disableBirthdayMode();
       if (wasAny) {
         return { text: '✨ Back to normal!', type: 'bot' };
       }
@@ -1386,7 +1514,17 @@
       disableNightSkyMode();
       return { text: '☀️ Welcome back!', type: 'bot' };
     }
-    // Valentine first (exclusive)
+    // Birthday (exclusive — must come BEFORE Valentine because "happy birthday" overlaps)
+    if (isExitBirthday(text)) {
+      disableBirthdayMode();
+      return { text: 'Until next year! 🎂', type: 'bot' };
+    }
+    if (isBirthdayMode(text)) {
+      enableBirthdayMode();
+      return { text: '🎂 Happy birthday! 🎉 Let\'s celebrate!', type: 'bot' };
+    }
+
+    // Valentine (exclusive)
     if (isExitValentine(text)) {
       disableValentineMode();
       return { text: 'Until next year! 💌', type: 'bot' };
@@ -1398,8 +1536,9 @@
     }
 
     if (isOceanMode(text)) {
-      // Disable Valentine if it was on (exclusive modes)
+      // Disable exclusive modes if active
       if (isValentineActive()) disableValentineMode();
+      if (isBirthdayActive()) disableBirthdayMode();
       enableOceanMode();
       // If night sky was already active → night ocean!
       if (isNightSkyActive()) {
@@ -1409,6 +1548,7 @@
     }
     if (isNightSkyMode(text)) {
       if (isValentineActive()) disableValentineMode();
+      if (isBirthdayActive()) disableBirthdayMode();
       enableNightSkyMode();
       // If ocean was already active → night ocean!
       if (isOceanActive()) {
