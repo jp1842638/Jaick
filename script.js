@@ -1138,16 +1138,30 @@
       });
     }
 
-    // 8 fish (random emoji, random size, random direction)
+    // 8 fish (random emoji, random size).
+    // Direction depends on emoji (so the head leads the swim):
+    //   🐠 🐟 🐡 → swim right→left (default emoji head faces left)
+    //   🦑       → swim left→right
+    //   🐙       → either (random)
     for (let i = 0; i < 8; i++) {
       const emoji = FISH_EMOJIS[Math.floor(Math.random() * FISH_EMOJIS.length)];
       const top   = 10 + Math.random() * 80;
       const dur   = 12 + Math.random() * 18;
       const delay = Math.random() * dur;
       const size  = 22 + Math.random() * 28;
-      const reverse = Math.random() < 0.5;
+
+      let direction; // 'right' = swim left→right; 'left' = swim right→left
+      if (emoji === '🦑') {
+        direction = 'right';
+      } else if (emoji === '🐙') {
+        direction = Math.random() < 0.5 ? 'right' : 'left';
+      } else {
+        // 🐠 🐟 🐡
+        direction = 'left';
+      }
+
       const fish = document.createElement('div');
-      fish.className = `fish${reverse ? ' fish-reverse' : ''}`;
+      fish.className = `fish${direction === 'left' ? ' swim-left' : ''}`;
       fish.textContent = emoji;
       Object.assign(fish.style, {
         top: `${top}%`,

@@ -496,6 +496,7 @@ body.ocean-mode .chat-container {
   100% { transform: translateY(-110vh)    translateX(-15px); opacity: 0; }
 }
 
+/* Default fish: swim left → right (used for 🦑 squid) */
 .fish {
   position: absolute;
   left: -80px;
@@ -504,9 +505,11 @@ body.ocean-mode .chat-container {
   user-select: none;
 }
 
-.fish-reverse {
-  animation-name: fishSwimReverse;
-  transform: scaleX(-1);
+/* Fish swimming right → left (used for 🐠 🐟 🐡 — heads face left) */
+.fish.swim-left {
+  left: auto;
+  right: -80px;
+  animation-name: fishSwimLeft;
 }
 
 @keyframes fishSwim {
@@ -517,12 +520,12 @@ body.ocean-mode .chat-container {
   100% { transform: translateX(120vw)   translateY(0); }
 }
 
-@keyframes fishSwimReverse {
-  0%   { transform: scaleX(-1) translateX(0)       translateY(0); }
-  25%  { transform: scaleX(-1) translateX(35vw)    translateY(15px); }
-  50%  { transform: scaleX(-1) translateX(70vw)    translateY(-10px); }
-  75%  { transform: scaleX(-1) translateX(100vw)   translateY(8px); }
-  100% { transform: scaleX(-1) translateX(120vw)   translateY(0); }
+@keyframes fishSwimLeft {
+  0%   { transform: translateX(0)       translateY(0); }
+  25%  { transform: translateX(-35vw)   translateY(-15px); }
+  50%  { transform: translateX(-70vw)   translateY(10px); }
+  75%  { transform: translateX(-100vw)  translateY(-8px); }
+  100% { transform: translateX(-120vw)  translateY(0); }
 }
 
 /* ============================================================
