@@ -93,6 +93,21 @@
     const msg = document.createElement('div');
     msg.classList.add('message', sender);
 
+    // Apply electric effect for battery easter egg (one-shot)
+    if (sender === 'bot' && pendingElectricEffect) {
+      msg.classList.add('electric');
+      pendingElectricEffect = false;
+      // Auto-remove the electric class after 3 seconds
+      setTimeout(() => msg.classList.remove('electric'), 3000);
+    }
+
+    // Apply sparkle effect for milkyway fish (one-shot)
+    if (sender === 'bot' && pendingSparkleEffect) {
+      msg.classList.add('sparkle');
+      pendingSparkleEffect = false;
+      setTimeout(() => msg.classList.remove('sparkle'), 3000);
+    }
+
     const senderLabel = document.createElement('span');
     senderLabel.classList.add('sender');
     senderLabel.textContent = sender === 'user' ? 'You' : 'Jaick';
@@ -524,6 +539,50 @@
   function isFrustrated(t) {
     return /\bug+h+\b/i.test(t);  // ugh, uggh, ughh, ughhhh
   }
+  // --- Easter Eggs (Ocean / Night sky / Battery) ---
+  function isOceanMode(t) {
+    return /\bocean\s+mode\b/i.test(t)
+        || /\benter\s+(the\s+)?ocean\b/i.test(t)
+        || /\b(start|activate)\s+ocean\b/i.test(t);
+  }
+  function isExitOcean(t) {
+    return /\b(exit|stop|leave|end|quit|disable)\s+(the\s+)?ocean\b/i.test(t);
+  }
+  function isNightSkyMode(t) {
+    return /\bnight\s*sky\s+mode\b/i.test(t)
+        || /\benter\s+(the\s+)?night\s*sky\b/i.test(t)
+        || /\b(start|activate)\s+night\s*sky\b/i.test(t)
+        || /\bstars?\s+mode\b/i.test(t);
+  }
+  function isExitNightSky(t) {
+    return /\b(exit|stop|leave|end|quit|disable)\s+(the\s+)?night\s*sky\b/i.test(t)
+        || /\b(exit|stop)\s+stars?\b/i.test(t);
+  }
+  function isGivingBattery(t) {
+    return /\bhere'?s\s+a\s+battery\b/i.test(t)
+        || /\bhave\s+a\s+battery\b/i.test(t)
+        || /\btake\s+(this\s+)?battery\b/i.test(t)
+        || /\bi\s+brought\s+(you\s+)?a\s+battery\b/i.test(t);
+  }
+  function isExitBoth(t) {
+    return /\bexit\s+(both|all)\b/i.test(t)
+        || /\b(stop|disable|end|quit)\s+(both|all)\b/i.test(t);
+  }
+  function isCatchingFish(t) {
+    return /\bcatch\s+(a\s+|some\s+)?fish(es)?\b/i.test(t)
+        || /\bgo\s+fishing\b/i.test(t);
+  }
+  function isMakingWish(t) {
+    return /\bmy\s+wish\s+is\b/i.test(t)
+        || /\bi\s+wish\s+(for|to)\b/i.test(t)
+        || /\bi\s+want\s+to\s+wish\s+for\b/i.test(t)
+        || /\bmake\s+a\s+wish\b/i.test(t);
+  }
+  // State helpers — read body classes
+  function isOceanActive()    { return document.body.classList.contains('ocean-mode'); }
+  function isNightSkyActive() { return document.body.classList.contains('night-sky-mode'); }
+  function isNightOcean()     { return isOceanActive() && isNightSkyActive(); }
+
   function isCursing(t) {
     return /\bf(?:u|\*|-)c?k(?:ing|ed|er|s)?\b/i.test(t)        // fuck, fucking, fck, f*ck, f-ck
         || /\bsh(?:i|\*)t(?:ty|s)?\b/i.test(t)                   // shit, sh*t, shitty
@@ -834,6 +893,171 @@
     return JAICK.favorites[kind];
   }
 
+  // ============================================================
+  // Easter Egg: Ocean / Night Sky / Battery
+  // ============================================================
+  const FISH_EMOJIS = ['🐠', '🐟', '🐡', '🦑', '🐙'];
+
+  function spawnElement(parent, className, styles = {}) {
+    const el = document.createElement('div');
+    el.className = className;
+    Object.assign(el.style, styles);
+    parent.appendChild(el);
+    return el;
+  }
+
+  function enableOceanMode() {
+    if (document.body.classList.contains('ocean-mode')) return;
+    document.body.classList.add('ocean-mode');
+
+    // Container for all ocean elements
+    const layer = document.createElement('div');
+    layer.id = 'oceanLayer';
+    layer.className = 'fx-layer';
+    document.body.appendChild(layer);
+
+    // 30 bubbles
+    for (let i = 0; i < 30; i++) {
+      const size = 8 + Math.random() * 28;
+      const left = Math.random() * 100;
+      const dur  = 6 + Math.random() * 10;
+      const delay = Math.random() * dur;
+      spawnElement(layer, 'bubble', {
+        left: `${left}%`,
+        width: `${size}px`,
+        height: `${size}px`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+    }
+
+    // 8 fish (random emoji, random size, random direction)
+    for (let i = 0; i < 8; i++) {
+      const emoji = FISH_EMOJIS[Math.floor(Math.random() * FISH_EMOJIS.length)];
+      const top   = 10 + Math.random() * 80;
+      const dur   = 12 + Math.random() * 18;
+      const delay = Math.random() * dur;
+      const size  = 22 + Math.random() * 28;
+      const reverse = Math.random() < 0.5;
+      const fish = document.createElement('div');
+      fish.className = `fish${reverse ? ' fish-reverse' : ''}`;
+      fish.textContent = emoji;
+      Object.assign(fish.style, {
+        top: `${top}%`,
+        fontSize: `${size}px`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+      layer.appendChild(fish);
+    }
+  }
+
+  function disableOceanMode() {
+    document.body.classList.remove('ocean-mode');
+    const layer = document.getElementById('oceanLayer');
+    if (layer) layer.remove();
+  }
+
+  let nightSkyShootingTimer = null;
+  function enableNightSkyMode() {
+    if (document.body.classList.contains('night-sky-mode')) return;
+    document.body.classList.add('night-sky-mode');
+
+    const layer = document.createElement('div');
+    layer.id = 'nightSkyLayer';
+    layer.className = 'fx-layer';
+    document.body.appendChild(layer);
+
+    // Galaxy band (single decorative element)
+    const galaxy = document.createElement('div');
+    galaxy.className = 'galaxy-band';
+    layer.appendChild(galaxy);
+
+    // 75 stars
+    for (let i = 0; i < 75; i++) {
+      const top  = Math.random() * 100;
+      const left = Math.random() * 100;
+      const size = 1 + Math.random() * 2.5;
+      const dur  = 2 + Math.random() * 4;
+      const delay = Math.random() * dur;
+      spawnElement(layer, 'star', {
+        top: `${top}%`,
+        left: `${left}%`,
+        width: `${size}px`,
+        height: `${size}px`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+    }
+
+    // Random shooting stars every 5–15 seconds
+    function scheduleShootingStar() {
+      const wait = 5000 + Math.random() * 10000;
+      nightSkyShootingTimer = setTimeout(() => {
+        const layer = document.getElementById('nightSkyLayer');
+        if (!layer) return;
+        const top  = Math.random() * 50;          // top half of screen
+        const left = 60 + Math.random() * 30;     // start near right
+        const star = spawnElement(layer, 'shooting-star', {
+          top: `${top}%`,
+          left: `${left}%`,
+        });
+        setTimeout(() => star.remove(), 1500);
+        scheduleShootingStar();
+      }, wait);
+    }
+    scheduleShootingStar();
+  }
+
+  function disableNightSkyMode() {
+    document.body.classList.remove('night-sky-mode');
+    const layer = document.getElementById('nightSkyLayer');
+    if (layer) layer.remove();
+    if (nightSkyShootingTimer) {
+      clearTimeout(nightSkyShootingTimer);
+      nightSkyShootingTimer = null;
+    }
+  }
+
+  // Web Audio "charge" sound: rising square wave
+  function playChargeSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.65);
+      // Close context after sound ends to free resources
+      setTimeout(() => ctx.close && ctx.close().catch(() => {}), 800);
+    } catch (e) {
+      /* silent fail */
+    }
+  }
+
+  // Adds .electric class to the next bot message that gets rendered.
+  // We expose a flag the addMessage path can read.
+  let pendingElectricEffect = false;
+  function triggerBatteryEffect() {
+    pendingElectricEffect = true;
+    playChargeSound();
+  }
+
+  // Adds .sparkle class to the next bot message (used for milkyway fish catch)
+  let pendingSparkleEffect = false;
+  function triggerSparkleEffect() {
+    pendingSparkleEffect = true;
+  }
+
   function aprilFoolsList() {
     return [
       "Here are some fun (and harmless!) April Fools ideas: 🃏",
@@ -930,6 +1154,77 @@
       const dev = detectDevSiteLink(rawInput);
       if (dev === 'self')  return { text: "I'm inside that website!", type: 'bot' };
       if (dev === 'other') return { text: 'Oh, my developer made that!', type: 'bot' };
+    }
+
+    // 2h. Easter eggs — Ocean / Night Sky / Battery / combos
+
+    // Exit both first (so it isn't caught by single exit matchers)
+    if (isExitBoth(text)) {
+      const wasOcean = isOceanActive();
+      const wasNight = isNightSkyActive();
+      disableOceanMode();
+      disableNightSkyMode();
+      if (wasOcean || wasNight) {
+        return { text: '✨ Back to normal!', type: 'bot' };
+      }
+      return { text: 'There was nothing to exit, but okay! ✨', type: 'bot' };
+    }
+
+    if (isExitOcean(text)) {
+      disableOceanMode();
+      return { text: '🐚 Back to the surface!', type: 'bot' };
+    }
+    if (isExitNightSky(text)) {
+      disableNightSkyMode();
+      return { text: '☀️ Welcome back!', type: 'bot' };
+    }
+    if (isOceanMode(text)) {
+      enableOceanMode();
+      // If night sky was already active → night ocean!
+      if (isNightSkyActive()) {
+        return { text: '🌠🌊 Night ocean! Stars above, waves below.', type: 'bot' };
+      }
+      return { text: '🌊 Welcome to the deep blue! Tap into the ocean mode!', type: 'bot' };
+    }
+    if (isNightSkyMode(text)) {
+      enableNightSkyMode();
+      // If ocean was already active → night ocean!
+      if (isOceanActive()) {
+        return { text: '🌠🌊 Night ocean! Stars above, waves below.', type: 'bot' };
+      }
+      return { text: '🌠 Look up — the stars are out!', type: 'bot' };
+    }
+    if (isGivingBattery(text)) {
+      triggerBatteryEffect();
+      return { text: 'Yum!', type: 'bot' };
+    }
+
+    // Catch fish (state-dependent)
+    if (isCatchingFish(text)) {
+      if (isNightOcean()) {
+        triggerSparkleEffect();
+        return { text: 'You caught a milkyway fish! 🌌🐟✨', type: 'bot' };
+      }
+      if (isOceanActive()) {
+        return { text: 'You caught a fish! 🐟', type: 'bot' };
+      }
+      if (isNightSkyActive()) {
+        return { text: 'There are no fish in the sky! 😅', type: 'bot' };
+      }
+      return { text: 'You need to be in ocean mode first! 🌊', type: 'bot' };
+    }
+
+    // Make a wish (state-dependent)
+    if (isMakingWish(text)) {
+      if (isNightSkyActive()) {
+        return {
+          text: Math.random() < 0.5
+            ? 'Your wish will come true. ✨'
+            : 'Your wish cannot come true. 🌑',
+          type: 'bot',
+        };
+      }
+      return { text: 'Look up at the night sky first to make a wish! 🌠', type: 'bot' };
     }
 
     // 2f. Truth or Dare in progress
