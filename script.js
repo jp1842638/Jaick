@@ -751,6 +751,38 @@
   function isExitBirthday(t) {
     return /\b(exit|stop|leave|end|quit|disable)\s+birthday(\s+mode)?\b/i.test(t);
   }
+  // Whitelist of valid relation words for "my X's birthday" pattern.
+  const BIRTHDAY_RELATIONS = [
+    'friend','sister','brother','mom','mother','dad','father',
+    'cousin','grandma','grandpa','grandmother','grandfather',
+    'aunt','uncle','nephew','niece',
+    'pet','dog','cat',
+    'boyfriend','girlfriend','husband','wife',
+    'son','daughter','parent','parents',
+    'kid','child','baby','twin','sibling','siblings',
+  ];
+  // Detect "my <relation>'s birthday" — returns the relation or null.
+  // Only matches whitelisted relation words (not arbitrary names).
+  function detectOthersBirthday(t) {
+    const m = t.match(/\bmy\s+([a-z]+)'?s\s+birthday\b/i);
+    if (!m) return null;
+    const word = m[1].toLowerCase();
+    if (!BIRTHDAY_RELATIONS.includes(word)) return null;
+    return word;
+  }
+  // Detect "<Name>'s birthday" (capitalized name, NOT preceded by "my").
+  // Returns the name (preserving original capitalization) or null.
+  function detectNamedBirthday(raw) {
+    const re = /(?:^|[^a-zA-Z])([A-Z][a-z]+)['\u2019]s\s+birthday\b/g;
+    let match;
+    while ((match = re.exec(raw)) !== null) {
+      const startIdx = match.index + match[0].indexOf(match[1]);
+      const before = raw.slice(Math.max(0, startIdx - 4), startIdx).toLowerCase();
+      if (/\bmy\s+$/.test(before)) continue;  // skip "my Name's"
+      return match[1];
+    }
+    return null;
+  }
   // State helpers — read body classes
   function isOceanActive()    { return document.body.classList.contains('ocean-mode'); }
   function isNightSkyActive() { return document.body.classList.contains('night-sky-mode'); }
@@ -1259,11 +1291,13 @@
     layer.className = 'fx-layer';
     document.body.appendChild(layer);
 
-    // Big cake in the center-bottom
+    // Big cake — append directly to <body> (NOT to fx-layer) so it can
+    // sit between the chat and the input form via its own z-index.
     const cake = document.createElement('div');
     cake.className = 'birthday-cake';
+    cake.id = 'birthdayCake';
     cake.textContent = '🎂';
-    layer.appendChild(cake);
+    document.body.appendChild(cake);
 
     // 40 rainbow confetti pieces falling
     for (let i = 0; i < 40; i++) {
@@ -1293,6 +1327,9 @@
     document.body.classList.remove('birthday-mode');
     const layer = document.getElementById('birthdayLayer');
     if (layer) layer.remove();
+    // Cake lives outside fx-layer — remove it separately
+    const cake = document.getElementById('birthdayCake');
+    if (cake) cake.remove();
     // Cancel any pending notes
     birthdaySongTimers.forEach(t => clearTimeout(t));
     birthdaySongTimers = [];
@@ -1306,7 +1343,7 @@
     osc.frequency.setValueAtTime(freq, startTime);
     // Sharp attack, quick decay (xylophone-ish)
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.45, startTime + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -1518,6 +1555,22 @@
     if (isExitBirthday(text)) {
       disableBirthdayMode();
       return { text: 'Until next year! 🎂', type: 'bot' };
+    }
+    // Someone else's birthday by relation — "my friend's birthday"
+    {
+      const person = detectOthersBirthday(text);
+      if (person) {
+        enableBirthdayMode();
+        return { text: `🎂 Happy birthday to your ${person}! 🎉`, type: 'bot' };
+      }
+    }
+    // Someone else's birthday by name — "Tom's birthday"
+    {
+      const name = detectNamedBirthday(rawInput);
+      if (name) {
+        enableBirthdayMode();
+        return { text: `🎂 Happy birthday to ${name}! 🎉`, type: 'bot' };
+      }
     }
     if (isBirthdayMode(text)) {
       enableBirthdayMode();

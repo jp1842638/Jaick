@@ -266,6 +266,8 @@ body {
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 10;  /* keep input field above background effects (e.g. birthday cake) */
 }
 
 #userInput {
@@ -823,7 +825,7 @@ body.birthday-mode .chat-container {
 }
 
 .birthday-cake {
-  position: absolute;
+  position: fixed;
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
@@ -831,7 +833,8 @@ body.birthday-mode .chat-container {
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25));
   animation: cakeWobble 2s ease-in-out infinite;
   user-select: none;
-  z-index: 2;
+  pointer-events: none;
+  z-index: 5;  /* above chat (z-index 0/auto), below input form (z-index 10) */
 }
 
 @keyframes cakeWobble {
@@ -846,6 +849,14 @@ body.birthday-mode .chat-container {
   opacity: 0.95;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   animation: confettiFall linear infinite;
+}
+
+/* Birthday mode: input text needs to be dark on the pastel background */
+body.birthday-mode #userInput {
+  color: #1a1a2e;
+}
+body.birthday-mode #userInput::placeholder {
+  color: rgba(50, 50, 80, 0.5);
 }
 
 @keyframes confettiFall {
