@@ -382,22 +382,33 @@
     if (/[\u{1F622}\u{1F972}]/u.test(t)) {
       return 'lonely';
     }
-    // hungry: 80+ food emojis (broad ranges)
-    // 🍏-🍯 covers most fruit/desserts; 🥐-🥡 covers prepared foods; 🦀🦐🦑🦞🦪 seafood
-    if (/[\u{1F34F}-\u{1F37F}\u{1F950}-\u{1F96F}\u{1F9C0}-\u{1F9CB}\u{1F347}-\u{1F353}\u{1F980}-\u{1F99F}]/u.test(t)
-        && !/\u{1F382}/u.test(t)  // exclude 🎂 (birthday cake — birthday mode)
-       ) {
-      // But require the food emoji is NOT a birthday-trigger
-      // (birthday matchers run first, so this is just a guard)
-      return 'hungry';
+    // hungry: explicit emoji set (covers all food emojis the user listed)
+    // 🍏🍎🍐🍊🍌🍋🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🫑🌽🥕🫒🧄🧅🥔🍠🫘🌰🥜🍞🥐🥖🫓🥨🥯🧇🧀🍖🍗🥩🥓🍟🍕🌭🥪🌮🌯🫔🥙🧆🥚🍳🥘🍲🫕🥣🥗🍿🧈🧂🥫🍱🍘🍙🍚🍛🍜🍝🍢🍣🍤🍥🥮🍡🥟🥠🥡🦀🦞🦐🦑🦪🍦🍧🍨🍩🍪🥧🍫🍬🍭🍮🍯
+    for (const em of HUNGRY_EMOJIS) {
+      if (t.includes(em)) return 'hungry';
     }
     // thirsty: 🍼🥛☕🫖🍵🍶🍾🍷🍸🍹🍺🍻🥂🥃🥤🧋🧃🧉🧊
-    if (/[\u{1F37C}\u{1F95B}\u{2615}\u{1FAD6}\u{1F375}\u{1F376}\u{1F37E}\u{1F377}\u{1F378}\u{1F379}\u{1F37A}\u{1F37B}\u{1F942}\u{1F943}\u{1F964}\u{1F9CB}\u{1F9C3}\u{1F9C9}\u{1F9CA}]/u.test(t)) {
-      return 'thirsty';
+    for (const em of THIRSTY_EMOJIS) {
+      if (t.includes(em)) return 'thirsty';
     }
 
     return null;
   }
+
+  // Explicit emoji lists for hungry / thirsty (avoids unicode-range pitfalls)
+  const HUNGRY_EMOJIS = [
+    '🍏','🍎','🍐','🍊','🍌','🍋','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍',
+    '🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🫒','🧄','🧅',
+    '🥔','🍠','🫘','🌰','🥜','🍞','🥐','🥖','🫓','🥨','🥯','🧇','🧀','🍖','🍗',
+    '🥩','🥓','🍟','🍕','🌭','🥪','🌮','🌯','🫔','🥙','🧆','🥚','🍳','🥘','🍲',
+    '🫕','🥣','🥗','🍿','🧈','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍢',
+    '🍣','🍤','🍥','🥮','🍡','🥟','🥠','🥡','🦀','🦞','🦐','🦑','🦪','🍦','🍧',
+    '🍨','🍩','🍪','🥧','🍫','🍬','🍭','🍮','🍯',
+  ];
+  const THIRSTY_EMOJIS = [
+    '🍼','🥛','☕','🫖','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤',
+    '🧋','🧃','🧉','🧊',
+  ];
 
   // --- Bored ---
   function isBored(t) {
@@ -665,6 +676,17 @@
   function isGrossed(t) {
     return /\u{1F92E}/u.test(t);  // 🤮
   }
+  // 😋 yum face → "I'm full" reaction
+  function isSayingFull(t) {
+    return /\u{1F60B}/u.test(t);  // 😋
+  }
+  // 💨 dash → fart reaction (excluding 😮‍💨 ZWJ sequence)
+  function isFarting(t) {
+    if (!/\u{1F4A8}/u.test(t)) return false;
+    // Strip the 😮‍💨 ZWJ sequence and check if 💨 still remains as a standalone
+    const stripped = t.replace(/\u{1F62E}\u{200D}\u{1F4A8}/gu, '');
+    return /\u{1F4A8}/u.test(stripped);
+  }
   function isFrustrated(t) {
     return /\bug+h+\b/i.test(t);  // ugh, uggh, ughh, ughhhh
   }
@@ -920,8 +942,8 @@
     if (hasGalaxy)             return 'night-sky';
     if (hasOcean)              return 'ocean';
     // Heart-type emojis → Valentine
-    // 💘💝💖💗💓💞💕💟❣️❤️🧡💛💚🩵💙💜🤎🖤🩶🤍 + 😘 (kiss)
-    if (/[\u{1F498}\u{1F49D}\u{1F496}\u{1F497}\u{1F493}\u{1F49E}\u{1F495}\u{1F49F}\u{2763}\u{2764}\u{1F9E1}\u{1F49B}\u{1F49A}\u{1FA75}\u{1F499}\u{1F49C}\u{1F90E}\u{1F5A4}\u{1FA76}\u{1F90D}\u{1F618}]/u.test(raw)) {
+    // 💘💝💖💗💓💞💕💟❣️❤️🧡💛💚🩵💙💜🤎🖤🩶🤍 + 😘 (kiss) + 🫶 (heart hands)
+    if (/[\u{1F498}\u{1F49D}\u{1F496}\u{1F497}\u{1F493}\u{1F49E}\u{1F495}\u{1F49F}\u{2763}\u{2764}\u{1F9E1}\u{1F49B}\u{1F49A}\u{1FA75}\u{1F499}\u{1F49C}\u{1F90E}\u{1F5A4}\u{1FA76}\u{1F90D}\u{1F618}\u{1FAF6}]/u.test(raw)) {
       return 'valentine';
     }
     // Birthday-type emojis → Birthday
@@ -1775,6 +1797,17 @@
     if (isGivingBattery(text)) {
       triggerBatteryEffect();
       return { text: 'Yum!', type: 'bot' };
+    }
+
+    // 💨 Fart reaction — random dizzy emoji
+    if (isFarting(text)) {
+      const dizzy = Math.random() < 0.5 ? '😵' : '😵‍💫';
+      return { text: `Eww!!! Why did you fart to me!? ${dizzy}`, type: 'bot' };
+    }
+
+    // 😋 Full reaction — Jaick wants a battery
+    if (isSayingFull(text)) {
+      return { text: "Mmm... I want a battery too.. 🪫\nGive me a battery emoji! 🔋", type: 'bot' };
     }
 
     // 🤢 Suffocating reaction — different in / out of ocean
