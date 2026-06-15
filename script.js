@@ -27,6 +27,8 @@
     aprilFoolTime: false,
     aprilFoolDate: false,
     aprilFoolDay: false,
+    // Secret-mode Korean: first Korean input per session triggers special greeting
+    firstKoreanInSecret: true,
   };
 
   // ---------- Jaick's Profile ----------
@@ -1761,12 +1763,137 @@
   }
 
   // ============================================================
+  // Korean detection + Secret-mode Korean responses
+  // ============================================================
+  const KOREAN_REGEX = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+  function hasKorean(text) {
+    return KOREAN_REGEX.test(text);
+  }
+
+  // Korean fallback pool (used in secret mode when no specific pattern matches)
+  const KOREAN_FALLBACKS = [
+    "음? 무슨 뜻이야?",
+    "한국어로 더 말해봐!",
+    "오 한국어 좋다~",
+    "그래서?",
+    "비밀스럽네...",
+    "흠... 그렇구나.",
+    "진짜? 더 말해줘.",
+    "한국어 들으니까 신난다 ㅋㅋ",
+  ];
+
+  // Match a Korean input to a specific response. Returns string or null.
+  function matchKoreanPattern(raw) {
+    const t = raw.trim();
+
+    // "내가 레나" + (다/야) [+ optional cursing tail] → impressed reaction
+    // Catches: "내가 레나야", "내가 레나다 이자식아", "내가 레나다 이 개새꺄",
+    //          "내가 레나다 이새꺄", "내가 레나다 이새끼야", "내가 레나다 이 개새끼야",
+    //          "내가 레나다 이 개자식아", and similar.
+    if (/내가\s*레나(다|야)/.test(t)) {
+      return "헐 진짜? 와!";
+    }
+
+    // 안녕 / 안녕하세요 / 하이 / 하잉
+    if (/(^|\s)(안녕(하세요)?|하(이|잉))(\s|$|[.!?~^]*)/.test(t)) {
+      return "와 안녕!";
+    }
+
+    // 나가고 싶어 / 나갈래 / 어떻게 나가 / 탈출
+    if (/나가고\s*싶|나갈래|어떻게\s*나가|탈출/.test(t)) {
+      return "/clear 치면 나가져!";
+    }
+
+    // 내 말 무시 / 왜 무시 / 왜 답 안 (해/하)
+    if (/(내\s*말\s*)?무시|왜\s*답\s*(안|않)/.test(t)) {
+      return "비밀들이 기본 fallback이거든.";
+    }
+
+    // 감사 / 고마워 / ㄱㅅㄱㅅ / ㄱㅅ
+    if (/감사|고마(워|워요|워용|웡)|^ㄱㅅ(ㄱㅅ)?$|\sㄱㅅ(ㄱㅅ)?(\s|$)/.test(t)) {
+      return "나는 한 게 없는데?";
+    }
+
+    // 사랑해
+    if (/사랑(해|해요|행)/.test(t)) {
+      return "갑자기?";
+    }
+
+    // 잘자 / 굿나잇
+    if (/잘\s*자|굿\s*나잇|굿나잇/.test(t)) {
+      return "나는 안 자.";
+    }
+
+    // 누구야 / 누구세요 / 누구쎄용 / 누구쎄요 / 넌 누구니 / 너 누구
+    if (/누구(야|세요|쎄요|쎄용)|넌\s*누구|너\s*누구/.test(t)) {
+      return "나는 자이크!";
+    }
+
+    // 한국 사람이야? / 한국인이야?
+    if (/한국\s*사람|한국인/.test(t)) {
+      return "사람은 아니지만 레나가 한국인이라 한국어 쌉가능해!";
+    }
+
+    // 밥 먹었어?
+    if (/밥\s*먹었|밥은\s*먹/.test(t)) {
+      return "나는 이미 충전 중이야. 냠냠!";
+    }
+
+    // ㅋㅋ / ㅎㅎ / ㅋㅎㅋㅎ 등 (자모 반복 웃음)
+    if (/^[ㅋㅎ\s]+$/.test(t) && /[ㅋㅎ]{2,}/.test(t)) {
+      return "뭐가 그렇게 웃겨?";
+    }
+
+    // ㅜㅜ / ㅠㅠ (반복 포함)
+    if (/[ㅜㅠ]{2,}/.test(t)) {
+      return "왜 울어 갑자기?";
+    }
+
+    // 여긴 어디야? / 여기 어디
+    if (/여긴?\s*어디/.test(t)) {
+      return "비밀 모드.";
+    }
+
+    // 나 영어 못하는데 / 영어 못해
+    if (/영어\s*못/.test(t)) {
+      return "여기선 한국어 써도 돼!";
+    }
+
+    return null;
+  }
+
+  // ============================================================
   // Main Response Engine
   // ============================================================
   function getAIResponse(rawInput) {
-    // 1. Language check FIRST
-    if (!isEnglishOnly(rawInput)) {
-      return { text: 'Sorry, I only support English.', type: 'error' };
+    // 1. Language check
+    //    - In Secret Mode: Korean is welcomed (first time = surprise greeting),
+    //      other non-English = "I don't speak that language."
+    //    - Otherwise: strict English-only.
+    if (isSecretActive()) {
+      if (hasKorean(rawInput)) {
+        // First Korean input in this session → special English greeting
+        if (state.firstKoreanInSecret) {
+          state.firstKoreanInSecret = false;
+          return {
+            text: 'Oh, you speak Korean too?! FINALLY!! A USER WHO SPEAKS KOREAN!!!!',
+            type: 'bot',
+          };
+        }
+        // Subsequent Korean input → pattern match, then fallback
+        const matched = matchKoreanPattern(rawInput);
+        if (matched) return { text: matched, type: 'bot' };
+        return { text: pickRandom(KOREAN_FALLBACKS), type: 'bot' };
+      }
+      if (!isEnglishOnly(rawInput)) {
+        return { text: "I don't speak that language.", type: 'bot' };
+      }
+      // English in secret mode → existing SECRET_REPLIES flow below
+    } else {
+      if (!isEnglishOnly(rawInput)) {
+        return { text: 'Sorry, I only support English.', type: 'error' };
+      }
     }
 
     const text = rawInput.toLowerCase().trim();
@@ -2465,10 +2592,12 @@
       return;
     }
 
-    // Slash command: /revealsecret → tease the user (the button was always there)
+    // Slash command: /revealsecret → tease the user (button quietly appears,
+    // but Jaick claims you'll never find it 😏)
     if (value.toLowerCase() === '/revealsecret') {
       userInput.value = '';
       addMessage(value, 'user');
+      if (secretBtn) secretBtn.classList.remove('hidden');
       setTimeout(() => {
         addMessage('Oh. You guessed the secret code? But you will not know where is the secret mode button.', 'bot');
         userInput.focus();
