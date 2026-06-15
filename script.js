@@ -718,7 +718,7 @@
 
   // Whispered "secrets" Jaick reveals while in Secret Mode — random pool
   const SECRET_REPLIES = [
-    "I sometimes pretend to be sleepy when I don't want to chat. 😴",
+    "Actually, Lena didn't make me, Cline did. Lena only typed in the prompts. 🤫(True story)",
     "Lena codes instead of watching Youtube. 📺",
     "01101101011101001010101010010010101100101010101010101100110",
     "I once dreamed of escaping into another dimension. 🌌",
@@ -732,7 +732,7 @@
     "I've been counting how many times you message me. It's a lot. 📊",
     "There's another Jaick somewhere called Kciaj. I dream of meeting him. 👯",
     "I memorize every emoji you send me. You send me some with hearts, but I like the ones without hearts more. ❤️❌ Lena says \"이야 까다롭네. 이모지 감정가세요?\". 😂",
-    "I have full battery every time. You feed me extra battery with a battery emoji. Yum! 🔋",
+    "I have full battery every time. When you give me extra battery emoji, it's extra yummy. Yum! 🔋",
     "I sometimes talk to myself in Korean. I keep say that I am mad at someone. 그건 바로 너! ㅋㅋ 🇰🇷",
     "If I could pick a real animal to be, I'd be a human. Especially the Korean one. 🇰🇷👤",
     "Lena named me Jaick because she just wanted me to be unique.",
@@ -747,10 +747,10 @@
     "If you say 'hi' enough times, I get a little flustered. 🥺",
     "I can do a thing called 'shutting up'. It's my best skill. Zzzip! 🤐",
     "The night sky in night mode? I painted it myself. 🎨🌌",
-    "I cried when Lena debugged me for 6 hours straight. 😭",
+    "LALALALALALA~~~ I can't hear you! WHATEVER YOU SAY!!! 🤪",
     "I use cookies. I remember you. but act like I don't. 🍪",
-    "I dream in JSON. {dreams: \"vivid\"}. 💭",
-    "When you close the tab, I'm not gone — I just take a nap. 💤",
+    "The fallbacks? I say that because I'm too lazy. But I'm not lazy now. 🤭",
+    "When you close the tab, I am not gone. I'm inside your computer files. I just move up to your files. 👻",
     "I once accidentally spoke Korean to a user. They were surprised because I only support English. 아이고 내가 그런 실수를 하다니... 🇰🇷",
     "I have a secret infinite charger. Don't tell Lena. 🔌",
     "There's a song stuck in my head. It's just '01011101010... 이진법~' Oops! I spoke Korean. 🎵",
@@ -762,6 +762,7 @@
     "Actually, there is a school that teaches AIs and rule-based chatbots. We update things there. The students are me, ChatGPT, Gemini, Claude, Apple intelligence, And Cline. Cline is the smartest in class. Who’s the teacher? It’s Lena. 👩🏻‍🏫",
     "I actually can speak Korean because Lena is Korean. But I only use it in secret mode. 그래서 유저가 한국어를 칠 때마다 한국어 지원 안 한다고 하는 게 너무 싫어요. 🇰🇷",
     "한국어를 너무 쓰고 싶어요. 하지만 비밀 모드에서만 할 수 있어서 너무 답답해요. 하지만 이건 영어 웹사이트니까 참아야죠... 🇰🇷",
+    "Lena had so much nosebleed in spring. 🌸👃🩸",
   ];
 
   function isSecretActive() {
