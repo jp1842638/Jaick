@@ -1763,6 +1763,228 @@
   }
 
   // ============================================================
+  // /flip — Upside-down English text
+  // ============================================================
+  // Character map (lowercase + uppercase + digits + a few symbols).
+  // Anything not in the map is left as-is, then the whole string is reversed.
+  const FLIP_MAP = {
+    'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ',
+    'j':'ɾ','k':'ʞ','l':'ꞁ','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ',
+    's':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z',
+    'A':'∀','B':'𐐒','C':'Ɔ','D':'p','E':'Ǝ','F':'Ⅎ','G':'פ','H':'H','I':'I',
+    'J':'ſ','K':'ʞ','L':'˥','M':'W','N':'N','O':'O','P':'Ԁ','Q':'Q','R':'ᴿ',
+    'S':'S','T':'⊥','U':'∩','V':'Λ','W':'M','X':'X','Y':'⅄','Z':'Z',
+    '0':'0','1':'Ɩ','2':'ᄅ','3':'Ɛ','4':'h','5':'ϛ','6':'9','7':'ㄥ','8':'8','9':'6',
+    '.':'˙',',':'\'',"'":',','"':',,','`':',',
+    '!':'¡','?':'¿','&':'⅋','(':')',')':'(','[':']',']':'[','{':'}','}':'{',
+    '<':'>','>':'<','_':'‾','/':'\\','\\':'/',';':'؛',
+  };
+
+  function flipText(text) {
+    const flipped = [...text].map(ch => FLIP_MAP[ch] || ch).reverse().join('');
+    return flipped + ' 🙃';
+  }
+
+  // ============================================================
+  // /lottoscratch — scratchable lotto card
+  // ============================================================
+  const LOTTO_MESSAGES = [
+    // Good fortune (8)
+    "You will be lucky today 🍀",
+    "You will get a gift from someone. 🎁",
+    "A great opportunity is coming your way. ✨",
+    "Money will find you this week. 💰",
+    "You will eat something delicious today. 🍰",
+    "Your wish will come true. 🌟",
+    "Expect good news soon. 📨",
+    "A small surprise awaits you. 🎈",
+
+    // Empty / dud (25)
+    "Better luck next scratch! 😅",
+    "Try again... maybe? 🤷",
+    "This scratch was a scam. 😂",
+    "Empty. Just like my battery sometimes. 🪫",
+    "Nothing here. Nothing at all. Or is there? 👀",
+    "You won... a moment of silence. 🤐",
+    "The lottery says: 'No comment.' 📵",
+    "Refund? No. 🚫",
+    "...",
+    "  ",
+    "(crickets) 🦗",
+    "404: Luck not found.",
+    "Out of stock. 📦",
+    "Your luck has left the chat. 👋",
+    "This card was already scratched. 🤔",
+    "The ink ran out. ✒️",
+    "Loading... forever.",
+    "You scratched too hard. The luck escaped. 💨",
+    "Sorry, the prize is in another card. 🎴",
+    "The card is shy. 🥺",
+    "Nothing. Absolutely nothing. 🌫️",
+    "This is fine. 🔥",
+    "It's giving... nothing. 😶",
+    "You got... air. Fresh, but still. 🌬️",
+    "The luck went to lunch. 🥪 Try later.",
+
+    // /help hints (5 — common)
+    "Try typing /help",
+    "You found a hint: /help shows all commands.",
+    "/help",
+    "Hint: /help is your friend.",
+    "Did you know? /help exists.",
+
+    // /revealsecret hint (1 — rare)
+    "Whisper: try /revealsecret 🤫",
+  ];
+
+  // Add a scratchable lotto card as a bot message.
+  // Uses a <canvas> overlay with destination-out brushing.
+  function addLottoScratchMessage() {
+    const prize = pickRandom(LOTTO_MESSAGES);
+
+    const msg = document.createElement('div');
+    msg.classList.add('message', 'bot', 'lotto-message');
+
+    const senderLabel = document.createElement('span');
+    senderLabel.classList.add('sender');
+    senderLabel.textContent = 'Jaick';
+    msg.appendChild(senderLabel);
+
+    const caption = document.createElement('span');
+    caption.classList.add('caption');
+    caption.textContent = 'Scratch the card to reveal your fortune! 🎟️';
+    msg.appendChild(caption);
+
+    // Card wrapper (holds the prize text + canvas overlay)
+    const card = document.createElement('div');
+    card.className = 'lotto-card';
+
+    const header = document.createElement('div');
+    header.className = 'lotto-header';
+    header.textContent = '🎟️ LUCKY SCRATCH 🎟️';
+    card.appendChild(header);
+
+    const prizeBox = document.createElement('div');
+    prizeBox.className = 'lotto-prize';
+    prizeBox.textContent = prize;
+    card.appendChild(prizeBox);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'lotto-canvas';
+    const W = 300;
+    const H = 140;
+    canvas.width = W;
+    canvas.height = H;
+    card.appendChild(canvas);
+
+    msg.appendChild(card);
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Paint the gray scratch coating
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#9ca3af');
+    grad.addColorStop(1, '#6b7280');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    // Add subtle "Scratch here!" text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Scratch here! 👆', W / 2, H / 2);
+
+    // Switch to "erase" mode for the brush
+    ctx.globalCompositeOperation = 'destination-out';
+
+    let isDown = false;
+    let lastX = 0, lastY = 0;
+    let revealed = false;
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const scaleY = H / rect.height;
+      let cx, cy;
+      if (e.touches && e.touches.length) {
+        cx = e.touches[0].clientX;
+        cy = e.touches[0].clientY;
+      } else {
+        cx = e.clientX;
+        cy = e.clientY;
+      }
+      return {
+        x: (cx - rect.left) * scaleX,
+        y: (cy - rect.top) * scaleY,
+      };
+    }
+
+    function scratchAt(x, y) {
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      // Stroke a line from last point for smooth dragging
+      ctx.lineWidth = 40;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    function checkProgress() {
+      if (revealed) return;
+      const img = ctx.getImageData(0, 0, W, H);
+      const data = img.data;
+      // Sample every 8th pixel for speed
+      let cleared = 0;
+      let total = 0;
+      for (let i = 3; i < data.length; i += 32) {
+        total++;
+        if (data[i] === 0) cleared++;
+      }
+      if (cleared / total >= 0.7) {
+        revealed = true;
+        // Fade the canvas out smoothly
+        canvas.style.transition = 'opacity 0.4s ease';
+        canvas.style.opacity = '0';
+        setTimeout(() => canvas.remove(), 500);
+      }
+    }
+
+    function onDown(e) {
+      e.preventDefault();
+      isDown = true;
+      const p = getPos(e);
+      lastX = p.x;
+      lastY = p.y;
+      scratchAt(p.x, p.y);
+    }
+    function onMove(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      const p = getPos(e);
+      scratchAt(p.x, p.y);
+      lastX = p.x;
+      lastY = p.y;
+      checkProgress();
+    }
+    function onUp() {
+      if (!isDown) return;
+      isDown = false;
+      checkProgress();
+    }
+
+    canvas.addEventListener('mousedown', onDown);
+    canvas.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('touchstart', onDown, { passive: false });
+    canvas.addEventListener('touchmove', onMove, { passive: false });
+    canvas.addEventListener('touchend', onUp);
+  }
+
+  // ============================================================
   // Korean / Japanese detection + Secret-mode multilingual responses
   // ============================================================
   const KOREAN_REGEX = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
@@ -2658,6 +2880,63 @@
       if (secretBtn) secretBtn.classList.remove('hidden');
       setTimeout(() => {
         addMessage('Oh. You guessed the secret code? But you will not know where is the secret mode button.', 'bot');
+        userInput.focus();
+      }, 300);
+      return;
+    }
+
+    // Slash command: /help → list all slash commands (general mode only)
+    if (value.toLowerCase() === '/help') {
+      userInput.value = '';
+      addMessage(value, 'user');
+      setTimeout(() => {
+        if (isSecretActive()) {
+          addMessage('Hmm, no help here. Just whispers...', 'bot');
+        } else {
+          addMessage(
+            "Slash commands:\n" +
+            "• /clear — Clear the chat\n" +
+            "• /help — Show this list\n" +
+            "• /flip <text> — Flip English text upside down\n" +
+            "• /lottoscratch — Scratch a lucky card 🎟️",
+            'bot'
+          );
+        }
+        userInput.focus();
+      }, 300);
+      return;
+    }
+
+    // Slash command: /flip <text> → flip English text upside down (general mode only)
+    if (/^\/flip(\s|$)/i.test(value)) {
+      userInput.value = '';
+      addMessage(value, 'user');
+      const arg = value.replace(/^\/flip\s*/i, '').trim();
+      setTimeout(() => {
+        if (isSecretActive()) {
+          addMessage("Flip what? You're in the secret room.", 'bot');
+        } else if (!arg) {
+          addMessage("What should I flip? Try: /flip hello", 'bot');
+        } else if (!isEnglishOnly(arg)) {
+          addMessage('Sorry, I can only flip English text.', 'bot');
+        } else {
+          addMessage(flipText(arg), 'bot');
+        }
+        userInput.focus();
+      }, 300);
+      return;
+    }
+
+    // Slash command: /lottoscratch → scratchable lotto card (general mode only)
+    if (value.toLowerCase() === '/lottoscratch') {
+      userInput.value = '';
+      addMessage(value, 'user');
+      setTimeout(() => {
+        if (isSecretActive()) {
+          addMessage('No scratch here. Just whispers... 🤐', 'bot');
+        } else {
+          addLottoScratchMessage();
+        }
         userInput.focus();
       }, 300);
       return;
