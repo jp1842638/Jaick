@@ -2465,13 +2465,12 @@
       return;
     }
 
-    // Slash command: /revealsecret → reveal the secret button
+    // Slash command: /revealsecret → tease the user (the button was always there)
     if (value.toLowerCase() === '/revealsecret') {
       userInput.value = '';
       addMessage(value, 'user');
-      if (secretBtn) secretBtn.classList.remove('hidden');
       setTimeout(() => {
-        addMessage('🔓 Secret button revealed! Find it on the page. 👀', 'bot');
+        addMessage('Oh. You guessed the secret code? But you will not know where is the secret mode button.', 'bot');
         userInput.focus();
       }, 300);
       return;
