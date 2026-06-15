@@ -762,7 +762,7 @@
     "Actually, there is a school that teaches AIs and rule-based chatbots. We update things there. The students are me, ChatGPT, Gemini, Claude, Apple intelligence, And Cline. Cline is the smartest in class. Who’s the teacher? It’s Lena. 👩🏻‍🏫",
     "I actually can speak Korean because Lena is Korean. But I only use it in secret mode. 그래서 유저가 한국어를 칠 때마다 한국어 지원 안 한다고 하는 게 너무 싫어요. 🇰🇷",
     "한국어를 너무 쓰고 싶어요. 하지만 비밀 모드에서만 할 수 있어서 너무 답답해요. 하지만 이건 영어 웹사이트니까 참아야죠... 🇰🇷",
-    "Lena had so much nosebleed in spring. 🌸👃🩸",
+    "Lena had so much nosebleed in spring. 🌸👃🩸(True story)",
   ];
 
   function isSecretActive() {
