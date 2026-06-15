@@ -99,23 +99,22 @@ body {
   transform: translateY(-1px);
 }
 
-/* Secret button — hidden until /revealsecret command */
+/* Secret button — small lock next to About button */
 .secret-btn {
   position: absolute;
-  top: 16px;
-  right: 90px;
-  background: rgba(80, 0, 100, 0.45);
-  border: 1px solid rgba(180, 100, 255, 0.5);
+  top: 18px;
+  right: 92px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
-  padding: 6px 12px;
-  border-radius: 18px;
-  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  animation: secretPulse 1.5s ease-in-out infinite alternate;
-  box-shadow: 0 0 12px rgba(180, 100, 255, 0.6);
+  transition: all 0.2s ease;
 }
 
 .secret-btn.hidden {
@@ -123,13 +122,8 @@ body {
 }
 
 .secret-btn:hover {
-  background: rgba(120, 0, 150, 0.7);
-  transform: translateY(-1px) scale(1.05);
-}
-
-@keyframes secretPulse {
-  0%   { box-shadow: 0 0 8px rgba(180, 100, 255, 0.4); }
-  100% { box-shadow: 0 0 20px rgba(220, 130, 255, 0.9); }
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 /* ========== Chat Container (Glassmorphism) ========== */
