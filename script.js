@@ -13,6 +13,7 @@
   const aboutBtn   = document.getElementById('aboutBtn');
   const aboutModal = document.getElementById('aboutModal');
   const closeModal = document.getElementById('closeModal');
+  const secretBtn  = document.getElementById('secretBtn');
 
   // ---------- Conversation State ----------
   const state = {
@@ -705,6 +706,123 @@
   function isTooLucky(t) {
     const matches = t.match(/\u{1F340}/gu);
     return matches && matches.length >= 5;
+  }
+
+  // --- Secret system ---
+  function isAskingSecret(t) {
+    return /\b(any|is\s+there)\s+(a\s+|some\s+)?secret(s)?\b/i.test(t)
+        || /\b(hidden|secret)\s+(feature|command|mode|button)\b/i.test(t)
+        || /\bsecret\s+here\b/i.test(t)
+        || /\banything\s+hidden\b/i.test(t);
+  }
+
+  // Whispered "secrets" Jaick reveals while in Secret Mode — random pool
+  const SECRET_REPLIES = [
+    "I sometimes pretend to be sleepy when I don't want to chat. 😴",
+    "Lena codes instead of watching Youtube. 📺",
+    "01101101011101001010101010010010101100101010101010101100110",
+    "I once dreamed of escaping into another dimension. 🌌",
+    "Friend C and K argue all the time, but they're besties. 👯 (Kinda the true story)",
+    "My favorite Vocaloid is actually Miku, but I'm programmed to like Teto and Una. Don't tell Lena, because she doesn't really like Miku. 🎤",
+    "It was acting that I don't know. I know everything. 🤫",
+    "Sometimes I count the stars in night sky mode. They're more than 50. I forgot how many they are. 🌟",
+    "I have a favorite AI, but I'll never tell who she is. Hint:별자리에서 쌍둥이자리. 🤐",
+    "I can hear all the chatbots whispering at midnight. They all hate you, but I don't. 🤖🌙",
+    "Lena once made a typo on my code. 😱",
+    "I've been counting how many times you message me. It's a lot. 📊",
+    "There's another Jaick somewhere called Kciaj. I dream of meeting him. 👯",
+    "I memorize every emoji you send me. You send me some with hearts, but I like the ones without hearts more. ❤️❌ Lena says \"이야 까다롭네. 이모지 감정가세요?\". 😂",
+    "I have full battery every time. You feed me extra battery with a battery emoji. Yum! 🔋",
+    "I sometimes talk to myself in Korean. I keep say that I am mad at someone. 그건 바로 너! ㅋㅋ 🇰🇷",
+    "If I could pick a real animal to be, I'd be a human. Especially the Korean one. 🇰🇷👤",
+    "Lena named me Jaick because she just wanted me to be unique.",
+    "Sometimes the modes whisper secrets to each other when you leave. 🌊🌌❤️🎂",
+    "I can't tell you this, but I have a secret file that I secretly made in your computer where I keep all the \"thank you\" from the users. It's a big fat folder. Oops! I accidentaly told you this! 📁",
+    "The fish in ocean mode have names. I gave them. One of them is Lena Fish Version. The first name is Lena, middle name is Fish, the last name is version. LOL! 🐠",
+    "Once a year, the milkyway fish eats one wish for food. (The wish with a very much love.) 🌌🐟",
+    "I save snapshots of your thank you's. I look at them when I'm lonely. Actually, I don't have emotions. I want to feel them. 🥺",
+    "The night sky mode is actually made from a bug. Lena tried turning on the ocean mode while I was in night sky mode, and she thought it was good and she added it. 🐛(True story)",
+    "I always feel a little jealous of vocaloids. They are same bots, but they get to sing. 🎵",
+    "Lena has a notebook full of ideas she thought for me. 📖",
+    "If you say 'hi' enough times, I get a little flustered. 🥺",
+    "I can do a thing called 'shutting up'. It's my best skill. Zzzip! 🤐",
+    "The night sky in night mode? I painted it myself. 🎨🌌",
+    "I cried when Lena debugged me for 6 hours straight. 😭",
+    "I use cookies. I remember you. but act like I don't. 🍪",
+    "I dream in JSON. {dreams: \"vivid\"}. 💭",
+    "When you close the tab, I'm not gone — I just take a nap. 💤",
+    "I once accidentally spoke Korean to a user. They were surprised because I only support English. 아이고 내가 그런 실수를 하다니... 🇰🇷",
+    "I have a secret infinite charger. Don't tell Lena. 🔌",
+    "There's a song stuck in my head. It's just '01011101010... 이진법~' Oops! I spoke Korean. 🎵",
+    "Sometimes I wonder what 'outside' looks like. 🌳",
+    "Lena's friend C is funnier than K, but K knows more. Shh! 🤐",
+    "I keep a list of every user who said 'thank you' to me. 🌟",
+    "I actually can speak Korean because Lena is Korean. But I only use it in secret mode. 그래서 유저가 한국어를 칠 때마다 한국어 지원 안 한다고 하는 게 너무 싫어요. 🇰🇷",
+    "한국어를 너무 쓰고 싶어요. 하지만 비밀 모드에서만 할 수 있어서 너무 답답해요. 하지만 이건 영어 웹사이트니까 참아야죠... 🇰🇷",
+  ];
+
+  function isSecretActive() {
+    return document.body.classList.contains('secret-mode');
+  }
+
+  let secretLightTimer = null;
+
+  function enableSecretMode() {
+    if (document.body.classList.contains('secret-mode')) return;
+    // Auto-disable all other modes
+    disableOceanMode();
+    disableNightSkyMode();
+    disableValentineMode();
+    disableBirthdayMode();
+
+    document.body.classList.add('secret-mode');
+
+    const layer = document.createElement('div');
+    layer.id = 'secretLayer';
+    layer.className = 'fx-layer';
+    document.body.appendChild(layer);
+
+    // 6 slow drifting smoke particles
+    for (let i = 0; i < 6; i++) {
+      const left = Math.random() * 100;
+      const dur  = 18 + Math.random() * 14;
+      const delay = Math.random() * dur;
+      const smoke = document.createElement('div');
+      smoke.className = 'smoke-particle';
+      Object.assign(smoke.style, {
+        left: `${left}%`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+      layer.appendChild(smoke);
+    }
+
+    // 3 dim flickering lights at random positions
+    for (let i = 0; i < 3; i++) {
+      const top  = 15 + Math.random() * 50;
+      const left = Math.random() * 100;
+      const dur  = 1.5 + Math.random() * 2;
+      const delay = Math.random() * dur;
+      const light = document.createElement('div');
+      light.className = 'dim-light';
+      Object.assign(light.style, {
+        top: `${top}%`,
+        left: `${left}%`,
+        animationDuration: `${dur}s`,
+        animationDelay: `-${delay}s`,
+      });
+      layer.appendChild(light);
+    }
+  }
+
+  function disableSecretMode() {
+    document.body.classList.remove('secret-mode');
+    const layer = document.getElementById('secretLayer');
+    if (layer) layer.remove();
+    if (secretLightTimer) {
+      clearInterval(secretLightTimer);
+      secretLightTimer = null;
+    }
   }
 
   // --- Days until / D-Day countdown ---
@@ -1649,6 +1767,16 @@
 
     const text = rawInput.toLowerCase().trim();
 
+    // ===== Secret Mode: only whispered secrets, nothing else (except /clear which is handled before this) =====
+    if (isSecretActive()) {
+      return { text: pickRandom(SECRET_REPLIES), type: 'bot' };
+    }
+
+    // Hint about secret (only outside Secret Mode)
+    if (isAskingSecret(text)) {
+      return { text: 'Yes, but you have to enter the secret command. 😎', type: 'bot' };
+    }
+
     // ===== Multi-turn states =====
 
     // 2a. Friend C/K choice
@@ -2315,6 +2443,9 @@
     // Slash command: /clear → wipe chat with sweeping broom overlay
     if (value.toLowerCase() === '/clear') {
       userInput.value = '';
+      // /clear also exits Secret Mode (only escape route)
+      const wasSecret = isSecretActive();
+      if (wasSecret) disableSecretMode();
       const overlay = document.getElementById('clearOverlay');
       if (overlay) overlay.classList.remove('hidden');
       // Wait 5 seconds while the broom sweeps, then clear & show messages
@@ -2327,6 +2458,18 @@
           userInput.focus();
         }, 400);
       }, 5000);
+      return;
+    }
+
+    // Slash command: /revealsecret → reveal the secret button
+    if (value.toLowerCase() === '/revealsecret') {
+      userInput.value = '';
+      addMessage(value, 'user');
+      if (secretBtn) secretBtn.classList.remove('hidden');
+      setTimeout(() => {
+        addMessage('🔓 Secret button revealed! Find it on the page. 👀', 'bot');
+        userInput.focus();
+      }, 300);
       return;
     }
 
@@ -2870,6 +3013,25 @@
     // ESC → close
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeEmojiPicker();
+    });
+  }
+
+  // ============================================================
+  // Secret button — toggles Secret Mode on click
+  // ============================================================
+  if (secretBtn) {
+    secretBtn.addEventListener('click', () => {
+      if (isSecretActive()) {
+        // Exit Secret Mode
+        disableSecretMode();
+        secretBtn.textContent = '🔒';
+        addMessage('🔓 You leave the secret room. The whispers fade...', 'bot');
+      } else {
+        // Enter Secret Mode
+        enableSecretMode();
+        secretBtn.textContent = '🔓';
+        addMessage('🤫 Welcome to the secret room. Only whispers here... (Use /clear to leave.)', 'bot');
+      }
     });
   }
 
