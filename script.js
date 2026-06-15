@@ -1763,12 +1763,19 @@
   }
 
   // ============================================================
-  // Korean detection + Secret-mode Korean responses
+  // Korean / Japanese detection + Secret-mode multilingual responses
   // ============================================================
   const KOREAN_REGEX = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+  // Japanese: only Hiragana / Katakana (NOT plain CJK Han, since that's
+  // ambiguous with Chinese — Chinese-only input falls through to the
+  // generic non-English handler).
+  const JAPANESE_KANA_REGEX = /[\u3040-\u309F\u30A0-\u30FF]/;
 
   function hasKorean(text) {
     return KOREAN_REGEX.test(text);
+  }
+  function hasJapanese(text) {
+    return JAPANESE_KANA_REGEX.test(text);
   }
 
   // Korean fallback pool (used in secret mode when no specific pattern matches)
@@ -1782,6 +1789,45 @@
     "진짜? 더 말해줘.",
     "한국어 들으니까 신난다 ㅋㅋ",
   ];
+
+  // Korean shocked replies — for cursing / personal attacks in secret mode
+  const KOREAN_SHOCKED_REPLIES = [
+    "헐 너 욕했어?? 😱",
+    "말이 험하네... 진정해 🥺",
+    "그런 말은 좀... 😨",
+    "엥? 갑자기 왜 그래 😳",
+    "야 그건 좀 심해 🚨",
+    "쉿! 비밀 모드라고 해서 욕해도 되는 건 아냐 🤐",
+  ];
+
+  // Japanese shocked replies — for cursing / personal attacks in secret mode
+  const JAPANESE_SHOCKED_REPLIES = [
+    "ええ?! ひどい! 😱",
+    "なんでそんなこと言うの... 😢",
+    "やめて! その言葉! 😨",
+    "うわ! 失礼だね! 😳",
+    "ちょっと! 言葉に気をつけて! 🚨",
+  ];
+
+  // Korean cursing / personal-attack detector
+  function isKoreanCursing(t) {
+    // Direct profanity
+    if (/씨발|시발|ㅅㅂ|개새끼|새끼야|새꺄|좆|ㅈ같|졸라|존나|ㅈㄴ|닥쳐|ㄷㅊ|꺼져|병신|ㅂㅅ|미친(놈|년)?|미췬|또라이|지랄|ㅈㄹ/.test(t)) return true;
+    // Personal attacks: "너/넌/니가/네가" + 비하 단어
+    if (/(너|넌|니가|네가)\s*(바보|멍청|등신|머저리|찐따|호구)/.test(t)) return true;
+    // Standalone vocative insult: "바보야/멍청아/..."
+    if (/(바보야|멍청아|등신아|머저리야|찐따야)/.test(t)) return true;
+    return false;
+  }
+
+  // Japanese cursing / personal-attack detector
+  function isJapaneseCursing(t) {
+    // Direct profanity
+    if (/バカ|馬鹿|ばか|アホ|あほ|クソ|くそ|死ね|しね|うるさい|きもい|キモい|ブス|カス|ボケ/.test(t)) return true;
+    // Personal attacks: "君は/きみは/お前は/おまえは/あなたは/君/お前/おまえ" + insult
+    if (/(君は|きみは|お前は|おまえは|あなたは|君|お前|おまえ)\s*(バカ|馬鹿|ばか|アホ|あほ|クソ|くそ|ブス|カス|ボケ)/.test(t)) return true;
+    return false;
+  }
 
   // Match a Korean input to a specific response. Returns string or null.
   function matchKoreanPattern(raw) {
@@ -1868,11 +1914,16 @@
   // ============================================================
   function getAIResponse(rawInput) {
     // 1. Language check
-    //    - In Secret Mode: Korean is welcomed (first time = surprise greeting),
-    //      other non-English = "I don't speak that language."
-    //    - Otherwise: strict English-only.
+    //    - In Secret Mode: Korean / Japanese are handled (with cursing
+    //      detection); other non-English = "I don't speak that language."
+    //    - Outside Secret Mode: strict English-only.
     if (isSecretActive()) {
+      // --- Korean ---
       if (hasKorean(rawInput)) {
+        // Cursing / personal attacks → Korean shocked reply (highest priority)
+        if (isKoreanCursing(rawInput)) {
+          return { text: pickRandom(KOREAN_SHOCKED_REPLIES), type: 'bot' };
+        }
         // First Korean input in this session → special English greeting
         if (state.firstKoreanInSecret) {
           state.firstKoreanInSecret = false;
@@ -1886,10 +1937,22 @@
         if (matched) return { text: matched, type: 'bot' };
         return { text: pickRandom(KOREAN_FALLBACKS), type: 'bot' };
       }
+      // --- Japanese (Hiragana / Katakana required — Han alone falls through) ---
+      if (hasJapanese(rawInput)) {
+        if (isJapaneseCursing(rawInput)) {
+          return { text: pickRandom(JAPANESE_SHOCKED_REPLIES), type: 'bot' };
+        }
+        return { text: "I don't speak that language.", type: 'bot' };
+      }
+      // --- Other non-English (Chinese-only Han, Cyrillic, Arabic, etc.) ---
       if (!isEnglishOnly(rawInput)) {
         return { text: "I don't speak that language.", type: 'bot' };
       }
-      // English in secret mode → existing SECRET_REPLIES flow below
+      // English in secret mode → English cursing check first, then SECRET_REPLIES
+      if (isCursing(rawInput.toLowerCase())) {
+        return { text: pickRandom(shockedReplies), type: 'bot' };
+      }
+      return { text: pickRandom(SECRET_REPLIES), type: 'bot' };
     } else {
       if (!isEnglishOnly(rawInput)) {
         return { text: 'Sorry, I only support English.', type: 'error' };
@@ -1897,11 +1960,6 @@
     }
 
     const text = rawInput.toLowerCase().trim();
-
-    // ===== Secret Mode: only whispered secrets, nothing else (except /clear which is handled before this) =====
-    if (isSecretActive()) {
-      return { text: pickRandom(SECRET_REPLIES), type: 'bot' };
-    }
 
     // Hint about secret (only outside Secret Mode)
     if (isAskingSecret(text)) {
