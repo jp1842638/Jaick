@@ -2829,7 +2829,7 @@
     // 26. Help
     if (isAskingHelp(text)) {
       return {
-        text: "I can chat, tell jokes, share fun facts, flip coins, roll dice, play rock-paper-scissors, tell stories, give the time/date, share my favorites, and more! Just ask in English. ✨",
+        text: "I can chat, tell jokes, share fun facts, flip coins, roll dice, play rock-paper-scissors, tell stories, give the time/date, share my favorites, play truth or dare, and more! Just ask in English. ✨",
         type: 'bot',
       };
     }
@@ -2865,7 +2865,7 @@
         if (overlay) overlay.classList.add('hidden');
         addMessage('Chat cleared! ✨🧹', 'bot');
         setTimeout(() => {
-          addMessage("Hi! I'm Jaick. How can I help you today? (English only, please ✨)", 'bot');
+          addMessage("Hi! I'm Jaick. How can I help you today? If you want to use commands, use /help. Or ask me \"What can you do?\" (English only, please ✨)", 'bot');
           userInput.focus();
         }, 400);
       }, 5000);
@@ -3525,7 +3525,7 @@
   // ============================================================
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-      addMessage("Hi! I'm Jaick. How can I help you today? (English only, please ✨)", 'bot');
+      addMessage("Hi! I'm Jaick. How can I help you today? If you want to use commands, use /help. Or ask me \"What can you do?\" (English only, please ✨)", 'bot');
     }, 300);
     userInput.focus();
   });
