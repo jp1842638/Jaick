@@ -48,26 +48,49 @@
   };
 
   // ============================================================
-  // Language Detection — English only
+  // /flip — Upside-down English text (reversible)
   // ============================================================
-  const NON_ENGLISH_REGEX = new RegExp(
-    [
-      '[\\uAC00-\\uD7AF]',                 // Hangul syllables
-      '[\\u1100-\\u11FF\\u3130-\\u318F]',  // Hangul jamo
-      '[\\u3040-\\u309F\\u30A0-\\u30FF]',  // Hiragana / Katakana
-      '[\\u4E00-\\u9FFF]',                 // CJK Unified Ideographs
-      '[\\u3400-\\u4DBF]',                 // CJK Extension A
-      '[\\u0400-\\u04FF]',                 // Cyrillic
-      '[\\u0600-\\u06FF\\u0750-\\u077F]',  // Arabic
-      '[\\u0590-\\u05FF]',                 // Hebrew
-      '[\\u0E00-\\u0E7F]',                 // Thai
-      '[\\u0900-\\u097F]',                 // Devanagari
-      '[\\u0370-\\u03FF]',                 // Greek
-    ].join('|')
-  );
+  // Character map (lowercase + uppercase + digits + a few symbols).
+  // Anything not in the map is left as-is, then the whole string is reversed.
+  // Note: '4' → 'h' since flipped 4 looks like h.
+  const FLIP_MAP = {
+    'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ',
+    'j':'ɾ','k':'ʞ','l':'ꞁ','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ',
+    's':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z',
+    'A':'∀','B':'𐐒','C':'Ɔ','D':'p','E':'Ǝ','F':'Ⅎ','G':'פ','H':'H','I':'I',
+    'J':'ſ','K':'ʞ','L':'˥','M':'W','N':'N','O':'O','P':'Ԁ','Q':'Q','R':'ᴿ',
+    'S':'S','T':'⊥','U':'∩','V':'Λ','W':'M','X':'X','Y':'⅄','Z':'Z',
+    '0':'0','1':'Ɩ','2':'ᄅ','3':'Ɛ','4':'h','5':'ϛ','6':'9','7':'ㄥ','8':'8','9':'6',
+    '.':'˙',',':'\'',"'":',','"':',,','`':',',
+    '!':'¡','?':'¿','&':'⅋','(':')',')':'(','[':']',']':'[','{':'}','}':'{',
+    '<':'>','>':'<','_':'‾','/':'\\','\\':'/',';':'؛',
+  };
 
-  function isEnglishOnly(text) {
-    return !NON_ENGLISH_REGEX.test(text);
+  // Build a reverse map automatically. If a flipped char already exists as a key
+  // in FLIP_MAP (e.g. 'b' is both a key AND a value of 'q'), we KEEP the
+  // first-registered direction so normal letters aren't accidentally flipped.
+  const FLIP_REVERSE_MAP = (() => {
+    const rev = {};
+    for (const [k, v] of Object.entries(FLIP_MAP)) {
+      if (!(v in FLIP_MAP) && !(v in rev)) {
+        rev[v] = k;
+      }
+    }
+    return rev;
+  })();
+
+  // Flip text. If input already contains 🙃, treat it as already-flipped and
+  // restore the original (using FLIP_REVERSE_MAP), then mark with 🙂.
+  function flipText(text) {
+    const isReversing = text.includes('🙃');
+    if (isReversing) {
+      // Strip 🙃 (and a leading/trailing space around it) before processing
+      const cleaned = text.replace(/\s*🙃\s*/g, '');
+      const restored = [...cleaned].map(ch => FLIP_REVERSE_MAP[ch] || ch).reverse().join('');
+      return restored + ' 🙂';
+    }
+    const flipped = [...text].map(ch => FLIP_MAP[ch] || ch).reverse().join('');
+    return flipped + ' 🙃';
   }
 
   // ============================================================
@@ -1763,29 +1786,6 @@
   }
 
   // ============================================================
-  // /flip — Upside-down English text
-  // ============================================================
-  // Character map (lowercase + uppercase + digits + a few symbols).
-  // Anything not in the map is left as-is, then the whole string is reversed.
-  const FLIP_MAP = {
-    'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ',
-    'j':'ɾ','k':'ʞ','l':'ꞁ','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ',
-    's':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z',
-    'A':'∀','B':'𐐒','C':'Ɔ','D':'p','E':'Ǝ','F':'Ⅎ','G':'פ','H':'H','I':'I',
-    'J':'ſ','K':'ʞ','L':'˥','M':'W','N':'N','O':'O','P':'Ԁ','Q':'Q','R':'ᴿ',
-    'S':'S','T':'⊥','U':'∩','V':'Λ','W':'M','X':'X','Y':'⅄','Z':'Z',
-    '0':'0','1':'Ɩ','2':'ᄅ','3':'Ɛ','4':'h','5':'ϛ','6':'9','7':'ㄥ','8':'8','9':'6',
-    '.':'˙',',':'\'',"'":',','"':',,','`':',',
-    '!':'¡','?':'¿','&':'⅋','(':')',')':'(','[':']',']':'[','{':'}','}':'{',
-    '<':'>','>':'<','_':'‾','/':'\\','\\':'/',';':'؛',
-  };
-
-  function flipText(text) {
-    const flipped = [...text].map(ch => FLIP_MAP[ch] || ch).reverse().join('');
-    return flipped + ' 🙃';
-  }
-
-  // ============================================================
   // /lottoscratch — scratchable lotto card
   // ============================================================
   const LOTTO_MESSAGES = [
@@ -2885,6 +2885,45 @@
       return;
     }
 
+    // Emoji shortcuts → slash commands
+    //   🎟️ anywhere in message → /lottoscratch
+    //   📋 anywhere in message → /help
+    if (/\u{1F39F}/u.test(value)) {
+      // 🎟️ admission ticket
+      userInput.value = '';
+      addMessage(value, 'user');
+      setTimeout(() => {
+        if (isSecretActive()) {
+          addMessage('No scratch here. Just whispers... 🤐', 'bot');
+        } else {
+          addLottoScratchMessage();
+        }
+        userInput.focus();
+      }, 300);
+      return;
+    }
+    if (/\u{1F4CB}/u.test(value)) {
+      // 📋 clipboard
+      userInput.value = '';
+      addMessage(value, 'user');
+      setTimeout(() => {
+        if (isSecretActive()) {
+          addMessage('Hmm, no help here. Just whispers...', 'bot');
+        } else {
+          addMessage(
+            "Slash commands:\n" +
+            "• /clear — Clear the chat\n" +
+            "• /help — Show this list\n" +
+            "• /flip <text> — Flip English text upside down\n" +
+            "• /lottoscratch — Scratch a lucky card 🎟️",
+            'bot'
+          );
+        }
+        userInput.focus();
+      }, 300);
+      return;
+    }
+
     // Slash command: /help → list all slash commands (general mode only)
     if (value.toLowerCase() === '/help') {
       userInput.value = '';
@@ -3079,7 +3118,7 @@
         '🪞','🪟','🛍️','🛒','🎁','🎈','🎏','🎀','🪄','🪅','🎊','🎉','🎎','🏮','🎐',
         '📱','📲','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','🗜️','💽','💾','💿','📀','📼',
         '📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️',
-        '🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🪫','🔌','💡','🔦','🕯️','📔',
+        '🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🪫','🔌','📔',
         '📕','📖','📗','📘','📙','📚','📓','📒','📃','📜','📄','📰','🗞️','📑','🔖',
         '🏷️','✉️','📧','📨','📩','📤','📥','📦','📫','📪','📬','📭','📮','🗳️','✏️',
         '✒️','🖋️','🖊️','🖌️','🖍️','📝','💼','📁','📂','🗂️','📅','📆','🗒️','🗓️','📇',
