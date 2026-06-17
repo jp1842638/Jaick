@@ -2826,7 +2826,18 @@
       return { text: pickRandom(farewellReplies), type: 'bot' };
     }
 
-    // 26. Help
+    // 26. Help — special-case "help" exact-match for urgency
+    {
+      const trimmed = rawInput.trim();
+      if (/^help$/i.test(trimmed) || /^help\s+me$/i.test(trimmed)) {
+        // Bare "help" or "help me" → pretend emergency (joke, not a real call)
+        return { text: 'OH NO!!! 911!!! *calling*', type: 'bot' };
+      }
+      if (/^help!$/i.test(trimmed)) {
+        // "help!" → mild
+        return { text: 'What? Are you stuck on something?', type: 'bot' };
+      }
+    }
     if (isAskingHelp(text)) {
       return {
         text: "I can chat, tell jokes, share fun facts, flip coins, roll dice, play rock-paper-scissors, tell stories, give the time/date, share my favorites, play truth or dare, and more! Just ask in English. ✨",
